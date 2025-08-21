@@ -34,3 +34,36 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Node.js dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# OS generated files
+Thumbs.db
+
+# Build output
+dist/
+build/
+
+# Environment files
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Misc
+coverage/
+
+# Private files
+public/images/
+data/index.txt
