@@ -20,11 +20,10 @@ class Logger {
         this.level = level;
 
         this.levels = {
-            debug: { priority: 0, color: chalk.cyan.bold },
-            info: { priority: 1, color: chalk.green.bold },
+            debug: { priority: 0, color: chalk.green.bold },
+            info: { priority: 1, color: chalk.rgb(41, 115, 218).bold },
             warn: { priority: 2, color: chalk.yellow.bold },
-            error: { priority: 3, color: chalk.redBright.bold },
-            success: { priority: 4, color: chalk.green.bold },
+            error: { priority: 3, color: chalk.rgb(255, 0, 0).bold },
         };
     }
 
@@ -72,10 +71,6 @@ class Logger {
 
     error(...args) {
         this.log("error", ...args);
-    }
-
-    success(...args) {
-        this.log("success", ...args);
     }
 }
 

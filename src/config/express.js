@@ -1,3 +1,4 @@
+// This file is used to configure Express middleware
 import cors from 'cors';
 import chalk from 'chalk';
 import { loggerMiddleware } from '../middleware/loggerMiddleware.js';
