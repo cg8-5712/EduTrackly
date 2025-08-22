@@ -18,7 +18,10 @@ const config = {
     jwt: {
         secret: process.env.JWT_SECRET || 'your_jwt_secret',
         expires: process.env.JWT_EXPIRE || '3600',
-    }
+    },
+    route: {
+        prefix: process.env.ROUTE_PREFIX || '/api/v1',
+    },
 };
 
 export default config;
