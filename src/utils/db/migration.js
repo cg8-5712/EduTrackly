@@ -1,49 +1,29 @@
-// src/utils/db/migrations.js
 import db from './db_connector.js';
 import logger from '../../middleware/loggerMiddleware.js';
+import fs from 'fs';
+import path from 'path';
 
 const migrations = {
-    async createTables() {
+    async runSchema() {
         try {
-            await db.query(`
-        CREATE TABLE IF NOT EXISTS users (
-          id SERIAL PRIMARY KEY,
-          username VARCHAR(50) UNIQUE NOT NULL,
-          email VARCHAR(100) UNIQUE NOT NULL,
-          password_hash VARCHAR(255) NOT NULL,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS study_sessions (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER REFERENCES users(id),
-          start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-          end_time TIMESTAMP WITH TIME ZONE,
-          status VARCHAR(20) DEFAULT 'active',
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        );
-        
-        -- 添加其他所需表...
-      `);
-
-            logger.info('数据库表创建成功');
+            logger.info('Starting database table creation...');
+            const sql = fs.readFileSync(path.resolve('./src/utils/db/migration/schema.sql'), 'utf-8');
+            await db.query(sql);
+            logger.info('✅ Database table creation successful');
         } catch (error) {
-            logger.error('创建数据库表失败:', error.message);
+            logger.error('❌ Database table creation failed:', error.message);
             throw error;
         }
     },
 
-    async addIndexes() {
+    async runSeed() {
         try {
-            await db.query(`
-        CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-        CREATE INDEX IF NOT EXISTS idx_study_sessions_user_id ON study_sessions(user_id);
-      `);
-
-            logger.info('数据库索引创建成功');
+            logger.info('Starting seeding mock data...');
+            const sql = fs.readFileSync(path.resolve('./src/utils/db/migration/mock.sql'), 'utf-8');
+            await db.query(sql);
+            logger.info('✅ Mock data seeded successfully');
         } catch (error) {
-            logger.error('创建数据库索引失败:', error.message);
+            logger.error('❌ Mock data seeding failed:', error.message);
             throw error;
         }
     }
