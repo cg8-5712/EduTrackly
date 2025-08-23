@@ -1,5 +1,5 @@
 // src/controllers/homeworkController.js
-import * as homeworkService from "../sevices/homework.js";
+import * as homeworkService from "../services/homework.js";
 import logger from "../middleware/loggerMiddleware.js";
 
 export async function getHomework(req, res) {
