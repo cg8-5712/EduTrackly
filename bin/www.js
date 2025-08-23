@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// /bin/www.js
 import http from 'http';
 import process from 'process';
 import chalk from 'chalk';
@@ -67,7 +68,7 @@ async function onListening() {
     logger.debug(chalk.yellow('Server:         '), chalk.white(`http://localhost:${port}`));
 
     try {
-        await initializeDatabase(); // ✅ 数据库在 logger 可用后再初始化
+        await initializeDatabase();
     } catch (err) {
         logger.error('❌ 数据库初始化失败:', err.message);
         logger.info('❌ 服务器启动失败, 请检查数据库连接配置');
