@@ -21,7 +21,7 @@ CREATE TABLE admin (
 -- ================= Homework Table =================
 CREATE TABLE homework (
                           hid SERIAL PRIMARY KEY,
-                          class_name VARCHAR(50) NOT NULL,
+                          cid INT NOT NULL,
                           description TEXT NOT NULL,
                           due_date DATE NOT NULL
 );
@@ -29,8 +29,14 @@ CREATE TABLE homework (
 -- ================= Student Table =================
 CREATE TABLE student (
                          sid SERIAL PRIMARY KEY,
-                         class_name VARCHAR(50) NOT NULL,
+                         cid INT NOT NULL,
                          student_name VARCHAR(50) NOT NULL
+);
+
+-- ================= Class Table =================
+CREATE TABLE class (
+                         cid SERIAL PRIMARY KEY,
+                         class_name VARCHAR(50) NOT NULL
 );
 
 -- ================= Attendance Table =================
@@ -45,7 +51,7 @@ CREATE TABLE attendance (
 
 -- ================= Indexes =================
 CREATE INDEX IF NOT EXISTS idx_admin_aid ON admin(aid);
-CREATE INDEX IF NOT EXISTS idx_homework_class ON homework(class_name);
 CREATE INDEX IF NOT EXISTS idx_homework_due_date ON homework(due_date);
-CREATE INDEX IF NOT EXISTS idx_student_class ON student(class_name);
+CREATE INDEX IF NOT EXISTS idx_student_cid ON student(cid);
 CREATE INDEX IF NOT EXISTS idx_student_name ON student(student_name);
+CREATE INDEX IF NOT EXISTS idx_homework_cid ON homework(cid);
