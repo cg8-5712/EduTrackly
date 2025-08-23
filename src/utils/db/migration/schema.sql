@@ -20,7 +20,6 @@ CREATE TABLE admin (
 
 -- ================= Homework Table =================
 CREATE TABLE homework (
-                          hid SERIAL PRIMARY KEY,
                           cid INT NOT NULL,
                           description TEXT NOT NULL,
                           due_date DATE NOT NULL
