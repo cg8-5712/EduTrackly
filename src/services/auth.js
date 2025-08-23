@@ -2,6 +2,7 @@
 import db from "../utils/db/db_connector.js";
 import jwt from "jsonwebtoken";
 import config from "../config/config.js";
+import logger from "../middleware/loggerMiddleware.js";
 
 /**
  * 用户认证
@@ -32,6 +33,13 @@ export async function authenticateUser(password, ip) {
                 WHERE aid = $2
             `;
             await db.query(updateQuery, [ip, admin.aid]);
+
+            if (config.app.env === "debug") {
+                logger.debug(`User ${admin.aid} logged in from ${ip} with token ${token} and expires in ${expiresIn} seconds`);
+            }
+            else {
+                logger.info(`User ${admin.aid} logged successfully`);
+            }
 
             return {
                 aid: admin.aid,
