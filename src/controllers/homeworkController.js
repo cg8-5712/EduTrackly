@@ -12,6 +12,14 @@ export async function getHomework(req, res) {
             });
         }
 
+        if (!date) {
+            return res.status(400).json({
+                code: 400,
+                message: "date is required",
+                timestamp: Date.now()
+            });
+        }
+
         const result = await homeworkService.getHomeworkByCidAndDate(cid, date);
 
         if (!result) {
