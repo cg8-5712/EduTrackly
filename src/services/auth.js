@@ -22,7 +22,7 @@ export async function authenticateUser(password, ip) {
     for (const admin of result.rows) {
         if (password === admin.password) {
             // 生成 JWT
-            const expiresIn = config.jwt.expiresIn || "1h"; // 默认 1 小时
+            const expiresIn = parseInt(config.jwt.expires) || 3600; // 默认 1 小时
             const token = jwt.sign({ aid: admin.aid }, config.jwt.secret, { expiresIn });
 
             // 更新最后登录信息

@@ -46,13 +46,16 @@ class DatabaseConnector {
             const res = await this.pool.query(text, params);
             const duration = Date.now() - start;
 
-            logger.debug('执行查询:', { text, duration, rows: res.rowCount });
+            logger.debug(
+                `执行查询: ${text} | 参数: ${JSON.stringify(params)} | 耗时: ${duration}ms | 返回行数: ${res.rowCount}`
+            );
             return res;
         } catch (error) {
-            logger.error('查询执行失败:', error.message);
+            logger.error(`查询执行失败: ${error.message} | SQL: ${text} | 参数: ${JSON.stringify(params)}`);
             throw error;
         }
     }
+
 
     async transaction(callback) {
         const client = await this.pool.connect();
