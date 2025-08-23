@@ -1,9 +1,11 @@
 // src/controllers/authController.js
 import { authenticateUser } from "../services/auth.js";
+import logger from "../middleware/loggerMiddleware.js";
 
 export async function login(req, res) {
     try {
         const { password } = req.body;
+        logger.debug("login", password);
 
         if (!password) {
             return res.status(400).json({

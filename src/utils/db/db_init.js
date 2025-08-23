@@ -10,10 +10,22 @@ export default async function initializeDatabase() {
         await db.initialize();
         logger.info('✅ Database connection initialized');
 
-        logger.info('⏳ Running database migrations...');
-        await migrations.runSchema();
-        await migrations.runSeed();
-        logger.info('✅ Database migrations completed');
+        // 判断数据库是否已经存在表
+        const result = await db.query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            LIMIT 1;
+        `);
+
+        if (result.rows.length === 0) {
+            logger.info('⏳ Running database migrations (first time)...');
+            await migrations.runSchema();
+            await migrations.runSeed();
+            logger.info('✅ Database migrations completed');
+        } else {
+            logger.info('⚡ Database already initialized, skipping migrations');
+        }
     } catch (error) {
         logger.error('❌ Error initializing database connection:', error.message);
         throw error;
