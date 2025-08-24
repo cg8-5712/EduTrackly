@@ -7,7 +7,7 @@ export const AuthErrors = {
 
 export const HomeworkErrors = {
     NOT_FOUND: { code: 2001, message: "Homework not found" },
-    CREATE_FAILED: { code: 2002, message: "Failed to create homework" },
+    CREATE_FAILED: { code: 2002, message: "Failed to create homework" }
 };
 
 export const StudentErrors = {
@@ -28,6 +28,7 @@ export const SystemErrors = {
 export const FormatErrors = {
     NOT_YYYYMMDD_DATE: { code: 8001, message: "Date format must be YYYYMMDD" },
     NOT_YYYYMMDDHHMMSS_DATE: { code: 8002, message: "Date format must be YYYYMMDDHHMMSS" },
+    DATE_ILLEGAL: { code: 8003, message: "Illegal date" },
 }
 
 export const ParamsErrors = {
