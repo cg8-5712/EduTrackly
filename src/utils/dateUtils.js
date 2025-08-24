@@ -1,6 +1,10 @@
+import { FormatErrors } from "../config/errorCodes.js";
+import logger from "../middleware/loggerMiddleware.js";
+
 export function formatDatefromyyyymmddtopsqldate(date) {
     if (typeof date !== 'string' || date.length !== 8) {
-        throw new Error('输入的日期格式不正确，应为 yyyymmdd 的字符串格式');
+        logger.error(JSON.stringify(FormatErrors.NOT_YYYYMMDD_DATE));
+        throw new Error(JSON.stringify(FormatErrors.NOT_YYYYMMDD_DATE));
     }
     const year = date.substring(0, 4);
     const month = date.substring(4, 6);
@@ -12,7 +16,8 @@ export function formatDatefromsqldatetoyyyymmdd(date) {
     // 创建一个 Date 对象，解析完整的 ISO 8601 日期时间字符串
     const utcDate = new Date(date);
     if (isNaN(utcDate.getTime())) {
-        throw new Error('输入的日期格式不正确，应为 yyyy-mm-dd 或 yyyy-mm-ddTHH:MM:SS.sssZ 的字符串格式');
+        logger.error(JSON.stringify(FormatErrors.NOT_YYYYMMDDHHMMSS_DATE));
+        throw new Error(JSON.stringify(FormatErrors.NOT_YYYYMMDDHHMMSS_DATE));
     }
 
     // 将 UTC 时间转换为本地时间
