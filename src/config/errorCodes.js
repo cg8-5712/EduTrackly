@@ -15,6 +15,21 @@ export const StudentErrors = {
     CREATE_FAILED: { code: 3002, message: "Failed to create student" },
 };
 
+export const ClassErrors = {
+    NOT_FOUND: { code: 4001, message: "Class not found" },
+    CREATE_FAILED: { code: 4002, message: "Failed to create class" },
+};
+
 export const SystemErrors = {
     INTERNAL: { code: 9001, message: "Internal server error" },
+    BAD_REQUEST: { code: 9002, message: "Bad request" },
 };
+
+export const FormatErrors = {
+    NOT_YYYYMMDD_DATE: { code: 8001, message: "Date format must be YYYYMMDD" },
+    NOT_YYYYMMDDHHMMSS_DATE: { code: 8002, message: "Date format must be YYYYMMDDHHMMSS" },
+}
+
+export const ParamsErrors = {
+    REQUIRE_CID: {code: 7001, message: "Required class id parameter"},
+}

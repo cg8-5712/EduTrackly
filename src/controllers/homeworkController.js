@@ -1,45 +1,39 @@
 import * as homeworkService from '../services/homework.js';
+import { HomeworkErrors, ParamsErrors, SystemErrors } from "../config/errorCodes.js";
+import moment from 'moment';
 
 export async function getHomework(req, res) {
     try {
-        const { cid, date } = req.query;
+        let { cid, date } = req.query;
 
         if (!cid) {
             return res.status(400).json({
-                code: 400,
-                message: "cid is required",
+                ...ParamsErrors.REQUIRE_CID,
                 timestamp: Date.now()
             });
         }
 
         if (!date) {
-            return res.status(400).json({
-                code: 400,
-                message: "date is required",
-                timestamp: Date.now()
-            });
+            date = moment().format('YYYYMMDD');
         }
 
         const result = await homeworkService.getHomeworkByCidAndDate(cid, date);
-
         if (!result) {
             return res.status(404).json({
-                code: 404,
-                message: "No homework found",
+                ...HomeworkErrors.NOT_FOUND,
                 timestamp: Date.now()
             });
         }
 
         res.json({
             code: 0,
-            message: "OK",
+            message: "Get homework successfully",
             data: result,
             timestamp: Date.now()
         });
     } catch (error) {
         res.status(500).json({
-            code: 500,
-            message: error.message,
+            ...SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }
