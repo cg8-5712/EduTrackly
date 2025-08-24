@@ -57,3 +57,29 @@ export async function getHomework(req, res) {
         });
     }
 }
+
+export async function listHomeworks(req, res) {
+    try {
+        const { cid, startDate, endDate, order, page = 1, size = 20 } = req.query;
+
+        const result = await homeworkService.listHomeworks({ cid, startDate, endDate, order, page, size });
+
+        logger.info(`Get homework list successfully for class id ${cid || 'all'} and date range ${startDate || 'any'}-${endDate || 'any'}`);
+        logger.debug(`Homework list: ${JSON.stringify(result.data)}`);
+        logger.debug(`Pagination: ${JSON.stringify(result.pagination)}`);
+
+        res.json({
+            code: 0,
+            message: 'Homework list fetched successfully',
+            data: result.data,
+            pagination: result.pagination,
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        logger.error('Failed to list homeworks:', error);
+        res.status(500).json({
+            ...SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
+}

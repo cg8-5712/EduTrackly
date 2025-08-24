@@ -29,5 +29,5 @@ export function formatDatefromsqldatetoyyyymmdd(date) {
     const day = String(localDate.getDate()).padStart(2, '0');
 
     // 返回格式为 yyyymmdd 的字符串
-    return `${year}${month}${day}`;
+    return parseInt(`${year}${month}${day}`);
 }

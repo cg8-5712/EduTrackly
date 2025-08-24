@@ -54,3 +54,4 @@ CREATE INDEX IF NOT EXISTS idx_homework_due_date ON homework(due_date);
 CREATE INDEX IF NOT EXISTS idx_student_cid ON student(cid);
 CREATE INDEX IF NOT EXISTS idx_student_name ON student(student_name);
 CREATE INDEX IF NOT EXISTS idx_homework_cid ON homework(cid);
+CREATE INDEX IF NOT EXISTS idx_homework_cid_due_date ON homework(cid, due_date);
