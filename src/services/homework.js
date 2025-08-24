@@ -116,3 +116,28 @@ export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 
         throw error;
     }
 }
+
+export async function createOrUpdateHomework({ cid, homework_content, due_date }) {
+    try {
+        if (!cid || !homework_content || !due_date) {
+            throw new Error(JSON.stringify(FormatErrors.NOT_YYYYMMDD_DATE));
+        }
+
+        const sqlDate = formatDatefromyyyymmddtopsqldate(due_date.toString());
+
+        const upsertQuery = `
+            INSERT INTO homework (cid, description, due_date)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (cid, due_date)
+            DO UPDATE SET description = EXCLUDED.description
+        `;
+
+        await db.query(upsertQuery, [cid, homework_content, sqlDate]);
+
+        logger.info(`Homework for class ${cid} on ${sqlDate} created/updated successfully`);
+        return true;
+    } catch (error) {
+        logger.error('Failed to create/update homework:', error.message || error);
+        throw new Error(JSON.stringify(HomeworkErrors.CREATE_FAILED));
+    }
+}

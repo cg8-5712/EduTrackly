@@ -83,3 +83,43 @@ export async function listHomeworks(req, res) {
         });
     }
 }
+
+export async function createHomework(req, res) {
+    try {
+        const { cid, homework_content, due_date } = req.body;
+
+        if (!cid || !homework_content || !due_date) {
+            logger.error('Missing required parameters for creating/updating homework');
+            return res.status(400).json({
+                ...FormatErrors.NOT_YYYYMMDD_DATE,
+                timestamp: Date.now()
+            });
+        }
+
+        await homeworkService.createOrUpdateHomework({ cid, homework_content, due_date });
+
+        res.json({
+            code: 0,
+            message: 'Homework created or updated successfully',
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        logger.error('Error in createHomework controller:', error);
+
+        let responseError = SystemErrors.INTERNAL;
+
+        try {
+            const parsed = JSON.parse(error.message);
+            if (parsed && parsed.code) {
+                responseError = parsed;
+            }
+        } catch (e) {
+            // 保持 SystemErrors
+        }
+
+        res.status(500).json({
+            ...responseError,
+            timestamp: Date.now()
+        });
+    }
+}
