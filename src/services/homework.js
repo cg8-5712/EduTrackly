@@ -152,3 +152,20 @@ export async function createOrUpdateHomework({ cid, homework_content, due_date }
         timestamp: Date.now()
     };
 }
+
+export async function deleteHomework(cid, date) {
+    const result = await db.query(
+        `DELETE FROM homework WHERE cid = $1 AND due_date = $2 RETURNING *`,
+        [cid, date]
+    );
+
+    if (result.rowCount === 0) {
+        throw HomeworkErrors.NOT_FOUND;
+    }
+
+    return {
+        code: 0,
+        message: "Homework deleted successfully",
+        timestamp: Date.now()
+    };
+}

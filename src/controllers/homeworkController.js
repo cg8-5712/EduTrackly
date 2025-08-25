@@ -39,8 +39,7 @@ export async function getHomework(req, res) {
         logger.info(`Get homework successfully for class id ${cid} and date ${date}`);
 
     } catch (error) {
-        logger.error('Error in createHomework controller:', error);
-        logger.error(error.code, error.message);
+        logger.error('Error in getHomework controller:', error);
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
                 ...error,
@@ -104,7 +103,7 @@ export async function createHomework(req, res) {
         if (!due_date) {
             logger.error('Missing required parameters due date');
             return res.status(400).json({
-                ...ParamsErrors.REQUIRE_DUE_DATE,
+                ...ParamsErrors.REQUIRE_DATE,
                 timestamp: Date.now()
             });
         }
@@ -144,5 +143,54 @@ export async function createHomework(req, res) {
 }
 
 export async function deleteHomework(req, res) {
+    try {
+        const { cid, date } = req.query;
 
+        // 参数检查
+        if (!cid) {
+            return res.status(400).json({
+                ...ParamsErrors.REQUIRE_CID,
+                timestamp: Date.now()
+            });
+        }
+
+        if (!date) {
+            return res.status(400).json({
+                ...ParamsErrors.REQUIRE_DATE,
+                timestamp: Date.now()
+            });
+        }
+
+        const dueDate = moment(date, 'YYYYMMDD');
+        if (!dueDate.isValid()) {
+            logger.error(`Invalid due date format: ${date}`);
+            return res.status(400).json({
+                ...FormatErrors.NOT_YYYYMMDD_DATE,
+                timestamp: Date.now()
+            });
+        }
+
+        await homeworkService.deleteHomework(cid, date);
+
+        res.json({
+            code: 0,
+            message: 'Homework delete successfully',
+            timestamp: Date.now()
+        });
+
+    } catch (error) {
+        logger.error('Error in deleteHomework controller:', error);
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        // 未知错误，统一返回 9001
+        res.status(500).json({
+            ...SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
 }
