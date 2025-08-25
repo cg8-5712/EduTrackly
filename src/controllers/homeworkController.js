@@ -39,24 +39,23 @@ export async function getHomework(req, res) {
         logger.info(`Get homework successfully for class id ${cid} and date ${date}`);
 
     } catch (error) {
-        logger.error(`Error in getHomework: ${error.message}`);
-
-        // 尝试解析 service 抛出的 JSON 错误码
-        let errorObj;
-        try {
-            errorObj = JSON.parse(error.message);
-        } catch {
-            // 如果解析失败，默认返回系统内部错误
-            errorObj = SystemErrors.INTERNAL;
+        logger.error('Error in createHomework controller:', error);
+        logger.error(error.code, error.message);
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
         }
 
-        // 返回统一格式 JSON，不抛出原始异常
+        // 未知错误，统一返回 9001
         res.status(500).json({
-            ...errorObj,
+            ...SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }
 }
+
 
 export async function listHomeworks(req, res) {
     try {

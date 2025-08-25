@@ -9,6 +9,13 @@ export async function getHomeworkByCidAndDate(cid, date) {
     date = formatDatefromyyyymmddtopsqldate(date);
     logger.debug(`Getting homework for class ${cid} on ${date}`);
 
+    // 检查 cid 是否存在
+    const studentRes = await db.query(`SELECT 1 FROM student WHERE cid = $1 LIMIT 1`, [cid]);
+    if (studentRes.rows.length === 0) {
+        logger.warn(`CID ${cid} does not exist in class table`);
+        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+    }
+
     // 查询作业
     const homeworkQuery = `
         SELECT cid, description AS homework_content, due_date
