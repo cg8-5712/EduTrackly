@@ -22,7 +22,8 @@ CREATE TABLE admin (
 CREATE TABLE homework (
                           cid INT NOT NULL,
                           description TEXT NOT NULL,
-                          due_date DATE NOT NULL
+                          due_date DATE NOT NULL,
+                          CONSTRAINT uq_homework_cid_due_date UNIQUE (cid, due_date)
 );
 
 -- ================= Student Table =================
@@ -55,7 +56,3 @@ CREATE INDEX IF NOT EXISTS idx_student_cid ON student(cid);
 CREATE INDEX IF NOT EXISTS idx_student_name ON student(student_name);
 CREATE INDEX IF NOT EXISTS idx_homework_cid ON homework(cid);
 CREATE INDEX IF NOT EXISTS idx_homework_cid_due_date ON homework(cid, due_date);
-
-
--- ================= Functions =================
-ADD CONSTRAINT uq_homework_cid_due_date UNIQUE (cid, due_date);

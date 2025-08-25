@@ -1,4 +1,4 @@
-import { HomeworkErrors } from "../config/errorCodes.js";
+import {ClassErrors, FormatErrors, HomeworkErrors, StudentErrors} from "../config/errorCodes.js";
 import db from '../utils/db/db_connector.js';
 import logger from "../middleware/loggerMiddleware.js";
 import { formatDatefromyyyymmddtopsqldate, formatDatefromsqldatetoyyyymmdd } from "../utils/dateUtils.js";
@@ -118,26 +118,28 @@ export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 
 }
 
 export async function createOrUpdateHomework({ cid, homework_content, due_date }) {
-    try {
-        if (!cid || !homework_content || !due_date) {
-            throw new Error(JSON.stringify(FormatErrors.NOT_YYYYMMDD_DATE));
-        }
+    // 格式化日期
+    const sqlDate = formatDatefromyyyymmddtopsqldate(due_date.toString());
 
-        const sqlDate = formatDatefromyyyymmddtopsqldate(due_date.toString());
-
-        const upsertQuery = `
-            INSERT INTO homework (cid, description, due_date)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (cid, due_date)
-            DO UPDATE SET description = EXCLUDED.description
-        `;
-
-        await db.query(upsertQuery, [cid, homework_content, sqlDate]);
-
-        logger.info(`Homework for class ${cid} on ${sqlDate} created/updated successfully`);
-        return true;
-    } catch (error) {
-        logger.error('Failed to create/update homework:', error.message || error);
-        throw new Error(JSON.stringify(HomeworkErrors.CREATE_FAILED));
+    // 检查 cid 是否存在
+    const studentRes = await db.query(`SELECT 1 FROM student WHERE cid = $1 LIMIT 1`, [cid]);
+    if (studentRes.rows.length === 0) {
+        logger.warn(`CID ${cid} does not exist in class table`);
+        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
     }
+
+    // 插入或更新作业
+    await db.query(`
+        INSERT INTO homework (cid, description, due_date)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (cid, due_date)
+        DO UPDATE SET description = EXCLUDED.description
+    `, [cid, homework_content, sqlDate]);
+
+    logger.info(`Homework for class ${cid} on ${sqlDate} created/updated successfully`);
+    return {
+        code: 0,
+        message: 'Homework created/updated successfully',
+        timestamp: Date.now()
+    };
 }

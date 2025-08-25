@@ -128,20 +128,17 @@ export async function createHomework(req, res) {
         });
     } catch (error) {
         logger.error('Error in createHomework controller:', error);
-
-        let responseError = SystemErrors.INTERNAL;
-
-        try {
-            const parsed = JSON.parse(error.message);
-            if (parsed && parsed.code) {
-                responseError = parsed;
-            }
-        } catch (e) {
-            // 保持 SystemErrors
+        logger.error(error.code, error.message);
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
         }
 
+        // 未知错误，统一返回 9001
         res.status(500).json({
-            ...responseError,
+            ...SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }
