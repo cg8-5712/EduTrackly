@@ -33,4 +33,6 @@ export const FormatErrors = {
 
 export const ParamsErrors = {
     REQUIRE_CID: {code: 7001, message: "Required class id parameter"},
+    REQUIRE_HOMEWORK_CONTENT: {code: 7002, message: "Required homework content parameter"},
+    REQUIRE_DUE_DATE: {code: 7003, message: "Required due date parameter"},
 }

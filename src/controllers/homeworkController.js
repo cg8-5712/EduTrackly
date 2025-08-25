@@ -88,8 +88,31 @@ export async function createHomework(req, res) {
     try {
         const { cid, homework_content, due_date } = req.body;
 
-        if (!cid || !homework_content || !due_date) {
-            logger.error('Missing required parameters for creating/updating homework');
+        if (!cid) {
+            logger.error('Missing required parameters class id');
+            return res.status(400).json({
+                ...ParamsErrors.REQUIRE_CID,
+                timestamp: Date.now()
+            });
+        }
+        if (!homework_content) {
+            logger.error('Missing required parameters homework content');
+            return res.status(400).json({
+                ...ParamsErrors.REQUIRE_HOMEWORK_CONTENT,
+                timestamp: Date.now()
+            });
+        }
+        if (!due_date) {
+            logger.error('Missing required parameters due date');
+            return res.status(400).json({
+                ...ParamsErrors.REQUIRE_DUE_DATE,
+                timestamp: Date.now()
+            });
+        }
+
+        const dueDate = moment(due_date, 'YYYYMMDD');
+        if (!dueDate.isValid()) {
+            logger.error(`Invalid due date format: ${due_date}`);
             return res.status(400).json({
                 ...FormatErrors.NOT_YYYYMMDD_DATE,
                 timestamp: Date.now()
