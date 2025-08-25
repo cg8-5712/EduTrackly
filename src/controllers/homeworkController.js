@@ -142,3 +142,7 @@ export async function createHomework(req, res) {
         });
     }
 }
+
+export async function deleteHomework(req, res) {
+
+}

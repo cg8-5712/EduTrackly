@@ -10,11 +10,12 @@ export async function getHomeworkByCidAndDate(cid, date) {
     logger.debug(`Getting homework for class ${cid} on ${date}`);
 
     // 检查 cid 是否存在
-    const studentRes = await db.query(`SELECT 1 FROM student WHERE cid = $1 LIMIT 1`, [cid]);
+    const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (studentRes.rows.length === 0) {
         logger.warn(`CID ${cid} does not exist in class table`);
         throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
     }
+
 
     // 查询作业
     const homeworkQuery = `
@@ -129,11 +130,12 @@ export async function createOrUpdateHomework({ cid, homework_content, due_date }
     const sqlDate = formatDatefromyyyymmddtopsqldate(due_date.toString());
 
     // 检查 cid 是否存在
-    const studentRes = await db.query(`SELECT 1 FROM student WHERE cid = $1 LIMIT 1`, [cid]);
+    const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (studentRes.rows.length === 0) {
         logger.warn(`CID ${cid} does not exist in class table`);
         throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
     }
+
 
     // 插入或更新作业
     await db.query(`
