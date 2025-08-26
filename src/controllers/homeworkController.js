@@ -42,7 +42,7 @@ export async function getHomework(req, res) {
         logger.error('Error in getHomework controller:', error);
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
-                ...ErrorCodes.error,
+                ...error,
                 timestamp: Date.now()
             });
         }
@@ -129,7 +129,7 @@ export async function createHomework(req, res) {
         logger.error(error.code, error.message);
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
-                ...ErrorCodes.error,
+                ...error,
                 timestamp: Date.now()
             });
         }
@@ -182,7 +182,7 @@ export async function deleteHomework(req, res) {
         logger.error('Error in deleteHomework controller:', error);
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
-                ...ErrorCodes.error,
+                ...error,
                 timestamp: Date.now()
             });
         }

@@ -36,4 +36,6 @@ export const ParamsErrors = {
     REQUIRE_HOMEWORK_CONTENT: {code: 7002, message: "Required homework content parameter"},
     REQUIRE_DATE: {code: 7003, message: "Required due date parameter"},
     REQUIRE_CLASS_NAME: {code: 7004, message: "Required class name parameter"},
+    REQUIRE_CLASS_NAME_OR_ID: {code: 7005, message: "Required class name or id parameter"},
+    TOO_MUCH_PARAMS: { code: 7006, message: "Too much parameters" }
 }

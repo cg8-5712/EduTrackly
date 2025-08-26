@@ -31,3 +31,26 @@ export function formatDatefromsqldatetoyyyymmdd(date) {
     // 返回格式为 yyyymmdd 的字符串
     return parseInt(`${year}${month}${day}`);
 }
+
+/**
+ * 格式化 PostgreSQL TIMESTAMP 为 JS 时间戳 (毫秒)
+ * @param {string|Date|null} sqlTimestamp - PostgreSQL TIMESTAMP，例如 "2025-08-25 21:00:00" 或 Date 对象
+ * @returns {number|null} 时间戳 (毫秒)，如果输入无效返回 null
+ */
+export function formatDateFromSqlTimestampToTimestamp(sqlTimestamp) {
+    if (!sqlTimestamp) return null;
+
+    try {
+        // PostgreSQL 返回可能是 string 或 Date
+        const date = sqlTimestamp instanceof Date ? sqlTimestamp : new Date(sqlTimestamp);
+
+        if (isNaN(date.getTime())) {
+            throw new Error(`Invalid SQL timestamp: ${sqlTimestamp}`);
+        }
+
+        return date.getTime(); // JS 时间戳，单位毫秒
+    } catch (err) {
+        console.error("formatDateFromSqlTimestampToTimestamp error:", err.message);
+        return null;
+    }
+}

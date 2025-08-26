@@ -1,5 +1,7 @@
 import db from "../utils/db/db_connector.js";
 import logger from "../middleware/loggerMiddleware.js";
+import { ClassErrors } from "../config/errorCodes.js";
+import { formatDateFromSqlTimestampToTimestamp } from "../utils/dateUtils.js";
 
 export async function createClass(className) {
     try {
@@ -28,4 +30,35 @@ export async function createClass(className) {
             message: 'database error'
         };
     }
+}
+
+export async function getClass( param ) {
+    let result;
+
+    if (typeof param === 'number') {
+        result = await db.query(
+            `SELECT cid, class_name, create_time FROM class WHERE cid = $1`,
+            [param]
+        );
+    } else {
+        result = await db.query(
+            `SELECT cid, class_name, create_time FROM class WHERE class_name = $1`,
+            [param]
+        );
+    }
+
+    if (result.rows.length === 0) {
+        logger.warn(`No class found with the parameter: ${param}`);
+        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+    }
+
+    const class_result = result.rows[0];
+    class_result.create_time = formatDateFromSqlTimestampToTimestamp(class_result.create_time);
+
+    return {
+        code: 0,
+        message: 'Get class information successfully',
+        data: class_result
+    };
+
 }
