@@ -62,3 +62,49 @@ export async function getClass( param ) {
     };
 
 }
+
+// service 层
+export async function listClass({ order = 'asc', page = 1, size = 20 }) {
+    try {
+        const offset = (page - 1) * size;
+        const orderClause = order.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+
+        const query = `
+            SELECT cid,
+                   class_name,
+                   create_time
+            FROM class
+            ORDER BY create_time ${orderClause}
+            LIMIT $1 OFFSET $2
+        `;
+
+        logger.debug('Executing listClass query:', query, [size, offset]);
+        const result = await db.query(query, [size, offset]);
+
+        const data = result.rows.map(r => ({
+            ...r,
+            create_time: formatDateFromSqlTimestampToTimestamp(r.create_time)
+        }));
+
+        // 获取总数
+        const countQuery = `SELECT COUNT(*) FROM class`;
+        const countRes = await db.query(countQuery);
+        const total = parseInt(countRes.rows[0].count, 10);
+        const pages = Math.ceil(total / size);
+
+        logger.info(`Listed ${data.length} classes (page ${page}/${pages}, total ${total})`);
+
+        return {
+            data,
+            pagination: {
+                page,
+                size,
+                total,
+                pages
+            }
+        };
+    } catch (error) {
+        logger.error('Failed to list class:', error.message);
+        throw error;
+    }
+}

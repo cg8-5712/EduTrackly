@@ -78,3 +78,31 @@ export async function getClassController(req, res) {
         });
     }
 }
+
+// controller 层
+export async function listClass(req, res) {
+    try {
+        const { order = 'asc' } = req.query;  // 排序方式从 query 取，默认升序
+        const { page = 1, size = 20 } = req.body; // 分页信息从 body 取
+
+        const result = await classService.listClass({ order, page, size });
+
+        logger.info(`Get class list successfully, order=${order}, page=${page}, size=${size}`);
+        logger.debug(`Class list: ${JSON.stringify(result.data)}`);
+        logger.debug(`Pagination: ${JSON.stringify(result.pagination)}`);
+
+        res.json({
+            code: 0,
+            message: 'Class list fetched successfully',
+            data: result.data,
+            pagination: result.pagination,
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        logger.error('Failed to list class:', error);
+        res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
+}
