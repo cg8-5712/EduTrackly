@@ -17,7 +17,7 @@ export const StudentErrors = {
 
 export const ClassErrors = {
     NOT_FOUND: { code: 4001, message: "Class not found" },
-    CREATE_FAILED: { code: 4002, message: "Failed to create class" },
+    ALREADY_EXIST: { code: 4002, message: "Class name already exist" },
 };
 
 export const SystemErrors = {
@@ -35,4 +35,5 @@ export const ParamsErrors = {
     REQUIRE_CID: {code: 7001, message: "Required class id parameter"},
     REQUIRE_HOMEWORK_CONTENT: {code: 7002, message: "Required homework content parameter"},
     REQUIRE_DATE: {code: 7003, message: "Required due date parameter"},
+    REQUIRE_CLASS_NAME: {code: 7004, message: "Required class name parameter"},
 }

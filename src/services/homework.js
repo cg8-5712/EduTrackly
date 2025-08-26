@@ -2,7 +2,6 @@ import {ClassErrors, FormatErrors, HomeworkErrors, StudentErrors} from "../confi
 import db from '../utils/db/db_connector.js';
 import logger from "../middleware/loggerMiddleware.js";
 import { formatDatefromyyyymmddtopsqldate, formatDatefromsqldatetoyyyymmdd } from "../utils/dateUtils.js";
-import { getPagination, getPagingData } from "../utils/pagination.js";
 
 export async function getHomeworkByCidAndDate(cid, date) {
     // format date to yyyy-mm-dd
@@ -27,7 +26,7 @@ export async function getHomeworkByCidAndDate(cid, date) {
     const homeworkRes = await db.query(homeworkQuery, [cid, date]);
 
     if (homeworkRes.rows.length === 0) {
-        throw new Error(JSON.stringify(HomeworkErrors.NOT_FOUND));
+        throw HomeworkErrors.NOT_FOUND;
     }
 
     const homework = homeworkRes.rows[0];

@@ -1,6 +1,6 @@
 import * as homeworkService from '../services/homework.js';
 import logger from "../middleware/loggerMiddleware.js";
-import { HomeworkErrors, ParamsErrors, SystemErrors, FormatErrors } from "../config/errorCodes.js";
+import * as ErrorCodes from "../config/errorCodes.js";
 import moment from 'moment';
 
 export async function getHomework(req, res) {
@@ -11,7 +11,7 @@ export async function getHomework(req, res) {
         if (!cid) {
             logger.error(`Required class id parameter is missing`);
             return res.status(400).json({
-                ...ParamsErrors.REQUIRE_CID,
+                ...ErrorCodes.ParamsErrors.REQUIRE_CID,
                 timestamp: Date.now()
             });
         }
@@ -25,7 +25,7 @@ export async function getHomework(req, res) {
         if (!result) {
             logger.error(`Homework not found for class id ${cid} and date ${date}`);
             return res.status(404).json({
-                ...HomeworkErrors.NOT_FOUND,
+                ...ErrorCodes.HomeworkErrors.NOT_FOUND,
                 timestamp: Date.now()
             });
         }
@@ -42,14 +42,14 @@ export async function getHomework(req, res) {
         logger.error('Error in getHomework controller:', error);
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
-                ...error,
+                ...ErrorCodes.error,
                 timestamp: Date.now()
             });
         }
 
         // 未知错误，统一返回 9001
         res.status(500).json({
-            ...SystemErrors.INTERNAL,
+            ...ErrorCodes.SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }
@@ -76,7 +76,7 @@ export async function listHomeworks(req, res) {
     } catch (error) {
         logger.error('Failed to list homeworks:', error);
         res.status(500).json({
-            ...SystemErrors.INTERNAL,
+            ...ErrorCodes.SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }
@@ -89,21 +89,21 @@ export async function createHomework(req, res) {
         if (!cid) {
             logger.error('Missing required parameters class id');
             return res.status(400).json({
-                ...ParamsErrors.REQUIRE_CID,
+                ...ErrorCodes.ParamsErrors.REQUIRE_CID,
                 timestamp: Date.now()
             });
         }
         if (!homework_content) {
             logger.error('Missing required parameters homework content');
             return res.status(400).json({
-                ...ParamsErrors.REQUIRE_HOMEWORK_CONTENT,
+                ...ErrorCodes.ParamsErrors.REQUIRE_HOMEWORK_CONTENT,
                 timestamp: Date.now()
             });
         }
         if (!due_date) {
             logger.error('Missing required parameters due date');
             return res.status(400).json({
-                ...ParamsErrors.REQUIRE_DATE,
+                ...ErrorCodes.ParamsErrors.REQUIRE_DATE,
                 timestamp: Date.now()
             });
         }
@@ -112,7 +112,7 @@ export async function createHomework(req, res) {
         if (!dueDate.isValid()) {
             logger.error(`Invalid due date format: ${due_date}`);
             return res.status(400).json({
-                ...FormatErrors.NOT_YYYYMMDD_DATE,
+                ...ErrorCodes.FormatErrors.NOT_YYYYMMDD_DATE,
                 timestamp: Date.now()
             });
         }
@@ -129,14 +129,14 @@ export async function createHomework(req, res) {
         logger.error(error.code, error.message);
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
-                ...error,
+                ...ErrorCodes.error,
                 timestamp: Date.now()
             });
         }
 
         // 未知错误，统一返回 9001
         res.status(500).json({
-            ...SystemErrors.INTERNAL,
+            ...ErrorCodes.SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }
@@ -149,14 +149,14 @@ export async function deleteHomework(req, res) {
         // 参数检查
         if (!cid) {
             return res.status(400).json({
-                ...ParamsErrors.REQUIRE_CID,
+                ...ErrorCodes.ParamsErrors.REQUIRE_CID,
                 timestamp: Date.now()
             });
         }
 
         if (!date) {
             return res.status(400).json({
-                ...ParamsErrors.REQUIRE_DATE,
+                ...ErrorCodes.ParamsErrors.REQUIRE_DATE,
                 timestamp: Date.now()
             });
         }
@@ -165,7 +165,7 @@ export async function deleteHomework(req, res) {
         if (!dueDate.isValid()) {
             logger.error(`Invalid due date format: ${date}`);
             return res.status(400).json({
-                ...FormatErrors.NOT_YYYYMMDD_DATE,
+                ...ErrorCodes.FormatErrors.NOT_YYYYMMDD_DATE,
                 timestamp: Date.now()
             });
         }
@@ -182,14 +182,14 @@ export async function deleteHomework(req, res) {
         logger.error('Error in deleteHomework controller:', error);
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
-                ...error,
+                ...ErrorCodes.error,
                 timestamp: Date.now()
             });
         }
 
         // 未知错误，统一返回 9001
         res.status(500).json({
-            ...SystemErrors.INTERNAL,
+            ...ErrorCodes.SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }

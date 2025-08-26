@@ -36,7 +36,8 @@ CREATE TABLE student (
 -- ================= Class Table =================
 CREATE TABLE class (
                          cid SERIAL PRIMARY KEY,
-                         class_name VARCHAR(50) NOT NULL
+                         class_name VARCHAR(50) NOT NULL UNIQUE,
+                         create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ================= Attendance Table =================
