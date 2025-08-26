@@ -74,7 +74,7 @@ export async function listClass({ order = 'asc', page = 1, size = 20 }) {
                    class_name,
                    create_time
             FROM class
-            ORDER BY create_time ${orderClause}
+            ORDER BY cid ${orderClause}
             LIMIT $1 OFFSET $2
         `;
 
