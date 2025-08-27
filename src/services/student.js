@@ -22,6 +22,13 @@ export async function addStudents({ cid, students }) {
         };
     }
 
+    // 检查 cid 是否存在
+    const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
+    if (studentRes.rows.length === 0) {
+        logger.warn(`CID ${cid} does not exist in class table`);
+        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+    }
+
     try {
         const queryText = `INSERT INTO student (cid, student_name) VALUES ($1, $2)`;
         for (const name of students) {
