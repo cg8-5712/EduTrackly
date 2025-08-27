@@ -1,6 +1,7 @@
 import * as studentService from '../services/student.js';
 import logger from '../middleware/loggerMiddleware.js';
 import { SystemErrors } from '../config/errorCodes.js';
+import * as ErrorCodes from "../config/errorCodes.js";
 
 export async function addStudentsController(req, res) {
     try {
@@ -12,20 +13,17 @@ export async function addStudentsController(req, res) {
         res.status(200).json(result);
 
     } catch (error) {
-        logger.error('Error in addStudentsController:', error);
-
-        let responseError = SystemErrors.INTERNAL;
-        try {
-            const parsed = JSON.parse(error.message);
-            if (parsed && parsed.code) {
-                responseError = parsed;
-            }
-        } catch (e) {
-            // 保持 INTERNAL
+        logger.error('Error in deleteHomework controller:', error);
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
         }
 
-        res.status(400).json({
-            ...responseError,
+        // 未知错误，统一返回 9001
+        res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }
