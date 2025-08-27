@@ -41,13 +41,13 @@ CREATE TABLE class (
 );
 
 -- ================= Attendance Table =================
-CREATE TYPE leave_type AS ENUM ('official', 'personal', 'sick');
+CREATE TYPE event_type AS ENUM ('official', 'personal', 'sick', 'temp');
 
 CREATE TABLE attendance (
                             aid SERIAL PRIMARY KEY,
                             sid INT NOT NULL REFERENCES student(sid) ON DELETE CASCADE,
-                            date DATE NOT NULL,
-                            leave_type leave_type NOT NULL
+                            event_date DATE NOT NULL,
+                            event_type event_type NOT NULL
 );
 
 -- ================= Indexes =================

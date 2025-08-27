@@ -27,10 +27,11 @@ INSERT INTO homework (cid, description, due_date) VALUES
                                                       (2, 'English reading: Chapter 5', '2025-08-25');
 
 -- Attendance (leave records)
-INSERT INTO attendance (sid, date, leave_type) VALUES
+INSERT INTO attendance (sid, event_date, event_type) VALUES
                                                    (1, '2025-08-23', 'sick'),
                                                    (3, '2025-08-23', 'official'),
                                                    (2, '2025-08-24', 'personal'),
                                                    (4, '2025-08-24', 'official'),
                                                    (1, '2025-08-25', 'sick'),
-                                                   (3, '2025-08-25', 'personal');
+                                                   (3, '2025-08-25', 'personal'),
+                                                   (2, '2025-08-25', 'temp');
