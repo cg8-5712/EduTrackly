@@ -114,12 +114,12 @@ export async function deleteClass(param) {
 
     if (param.cid) {
         result = await db.query(
-            `DELETE FROM classes WHERE cid = $1 RETURNING *`,
+            `DELETE FROM class WHERE cid = $1 RETURNING *`,
             [param.cid]
         );
     } else if (param.class_name) {
         result = await db.query(
-            `DELETE FROM classes WHERE class_name = $1 RETURNING *`,
+            `DELETE FROM class WHERE class_name = $1 RETURNING *`,
             [param.class_name]
         );
     }
