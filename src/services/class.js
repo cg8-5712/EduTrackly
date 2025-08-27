@@ -108,3 +108,29 @@ export async function listClass({ order = 'asc', page = 1, size = 20 }) {
         throw error;
     }
 }
+
+export async function deleteClass(param) {
+    let result;
+
+    if (param.cid) {
+        result = await db.query(
+            `DELETE FROM classes WHERE cid = $1 RETURNING *`,
+            [param.cid]
+        );
+    } else if (param.class_name) {
+        result = await db.query(
+            `DELETE FROM classes WHERE class_name = $1 RETURNING *`,
+            [param.class_name]
+        );
+    }
+
+    if (!result || result.rowCount === 0) {
+        throw ClassErrors.NOT_FOUND;
+    }
+
+    return {
+        code: 0,
+        message: "Class deleted successfully",
+        timestamp: Date.now()
+    };
+}

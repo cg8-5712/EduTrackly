@@ -106,3 +106,50 @@ export async function listClass(req, res) {
         });
     }
 }
+
+export async function deleteClassController(req, res) {
+    try {
+        const { cid, class_name } = req.query;
+
+        // 参数检查
+        if (!cid && !class_name) {
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.REQUIRE_CLASS_NAME_OR_ID,
+                timestamp: Date.now()
+            });
+        }
+
+        if (cid && class_name) {
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.TOO_MUCH_PARAMS,
+                timestamp: Date.now()
+            });
+        }
+
+        const param = cid ? { cid } : { class_name };
+
+        const result = await classService.deleteClass(param);
+
+        res.json({
+            code: result.code,
+            message: result.message,
+            timestamp: Date.now()
+        });
+
+    } catch (error) {
+        logger.error('Error in deleteClass controller:', error);
+
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        // 未知错误
+        res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
+}
