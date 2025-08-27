@@ -6,6 +6,7 @@ import config from "./src/config/config.js";
 import homeworkRoutes from "./src/routes/homework.js";
 import authRoutes from "./src/routes/auth.js";
 import classRoutes from "./src/routes/class.js";
+import studentRoutes from "./src/routes/student.js";
 
 const app = express();
 
@@ -16,5 +17,6 @@ configureExpress(app);
 app.use(config.route.prefix + "/homework", homeworkRoutes);
 app.use(config.route.prefix + "/auth", authRoutes);
 app.use(config.route.prefix + "/class", classRoutes);
+app.use(config.route.prefix + "/student", studentRoutes);
 
 export default app;
