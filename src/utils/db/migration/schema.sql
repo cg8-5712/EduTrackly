@@ -30,7 +30,8 @@ CREATE TABLE homework (
 CREATE TABLE student (
                          sid SERIAL PRIMARY KEY,
                          cid INT NOT NULL,
-                         student_name VARCHAR(50) NOT NULL
+                         student_name VARCHAR(50) NOT NULL,
+                         attendance BOOLEAN NOT NULL DEFAULT true
 );
 
 -- ================= Class Table =================
@@ -44,7 +45,6 @@ CREATE TABLE class (
 CREATE TYPE event_type AS ENUM ('official', 'personal', 'sick', 'temp');
 
 CREATE TABLE attendance (
-                            aid SERIAL PRIMARY KEY,
                             sid INT NOT NULL REFERENCES student(sid) ON DELETE CASCADE,
                             event_date DATE NOT NULL,
                             event_type event_type NOT NULL
