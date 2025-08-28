@@ -198,3 +198,26 @@ export async function deleteStudentController(req, res) {
         });
     }
 }
+
+export async function putStudentEventController(req, res) {
+    try {
+        const events = req.body;
+        const result = await studentService.putStudentEvents(events);
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error("Error in putStudentEventController:", error);
+
+        if (error.code && error.message) {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        return res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
+}

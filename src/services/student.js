@@ -164,3 +164,47 @@ export async function deleteStudent(sid) {
 
     return true;
 }
+
+export async function putStudentEvents(events) {
+    if (!Array.isArray(events) || events.length === 0) {
+        throw ErrorCodes.ParamsErrors.REQUIRE_BODY;
+    }
+
+    const values = [];
+    const params = [];
+
+    events.forEach((event, i) => {
+        if (!event.sid) {
+            throw ParamsErrors.REQUIRE_STUDENT_ID;
+        }
+
+        if (!event.event_type) {
+            throw ParamsErrors.REQUIRE_EVENT_TYPE;
+        }
+
+        // 校验 event_type 必须是 ENUM 里的值
+        const allowed = ["official", "personal", "sick", "temp"];
+        if (!allowed.includes(event.event_type)) {
+            throw ParamsErrors.ILLEGAL_EVENT_TYPE;
+        }
+
+        params.push(event.sid, event.event_type);
+        const offset = i * 2;
+        values.push(`($${offset + 1}, $${offset + 2})`);
+    });
+
+    const query = `
+        INSERT INTO attendance (sid, event_date, event_type)
+        VALUES ${values.map(v => `${v.split(",")[0]}, CURRENT_DATE, ${v.split(",")[1]}`).join(", ")}
+    `;
+
+    logger.debug(`putStudentEvents: ${query} with params ${params}`);
+
+    await db.query(query, params);
+
+    return {
+        code: 0,
+        message: "Student events recorded successfully",
+        timestamp: Date.now()
+    };
+}

@@ -43,4 +43,6 @@ export const ParamsErrors = {
     REQUIRE_STUDENT_ID: {code: 7009, message: "Required student id parameter"},
     REQUIRE_STATUS: {code: 7010, message: "Required status parameter"},
     REQUIRE_VALID_ATTENDANCE: {code: 7011, message: "Attendance must be true or false"},
+    REQUIRE_EVENT_TYPE: {code: 7012, message: "Required event type parameter"},
+    ILLEGAL_EVENT_TYPE: {code: 7013, message: "Illegal event type parameter"},
 }
