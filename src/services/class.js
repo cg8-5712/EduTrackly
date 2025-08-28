@@ -1,6 +1,6 @@
 import db from "../utils/db/db_connector.js";
 import logger from "../middleware/loggerMiddleware.js";
-import { ClassErrors } from "../config/errorCodes.js";
+import { ClassErrors, ParamsErrors } from "../config/errorCodes.js";
 import { formatDateFromSqlTimestampToTimestamp } from "../utils/dateUtils.js";
 
 export async function createClass(className) {
@@ -109,28 +109,46 @@ export async function listClass({ order = 'asc', page = 1, size = 20 }) {
     }
 }
 
+/**
+ * 删除班级及其学生
+ * @param {object} param { cid?: number, class_name?: string }
+ */
 export async function deleteClass(param) {
-    let result;
 
+    await db.query('BEGIN');
+
+    let classResult;
     if (param.cid) {
-        result = await db.query(
+        classResult = await db.query(
             `DELETE FROM class WHERE cid = $1 RETURNING *`,
             [param.cid]
         );
     } else if (param.class_name) {
-        result = await db.query(
+        classResult = await db.query(
             `DELETE FROM class WHERE class_name = $1 RETURNING *`,
             [param.class_name]
         );
     }
 
-    if (!result || result.rowCount === 0) {
+    if (!classResult || classResult.rowCount === 0) {
+        await client.query('ROLLBACK');
         throw ClassErrors.NOT_FOUND;
     }
 
+    // 删除该班级的学生
+    const cidToDelete = classResult.rows[0].cid;
+    await db.query(
+        `DELETE FROM student WHERE cid = $1`,
+        [cidToDelete]
+    );
+
+    await db.query('COMMIT');
+    logger.info(`Deleted class ${cidToDelete} and its students successfully`);
+
     return {
         code: 0,
-        message: "Class deleted successfully",
+        message: "Class and its students deleted successfully",
         timestamp: Date.now()
     };
+
 }
