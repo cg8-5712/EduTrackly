@@ -158,3 +158,43 @@ export async function attendanceChangeController(req, res) {
         });
     }
 }
+
+/**
+ * DELETE /student/delete
+ * 删除学生
+ */
+export async function deleteStudentController(req, res) {
+    try {
+        const { sid } = req.query;
+
+        if (!sid) {
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.REQUIRE_STUDENT_ID,
+                timestamp: Date.now()
+            });
+        }
+
+        await studentService.deleteStudent(sid);
+
+        return res.json({
+            code: 0,
+            message: "学生删除成功",
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        console.error("❌ deleteStudent error:", error);
+
+        if (error.code && typeof error.code === "number") {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        return res.status(500).json({
+            code: 9001,
+            message: "Internal server error",
+            timestamp: Date.now()
+        });
+    }
+}

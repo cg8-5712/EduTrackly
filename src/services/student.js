@@ -144,3 +144,21 @@ export async function changeAttendance(sid, attendance) {
     );
     return result.rowCount > 0;
 }
+
+/**
+ * 删除学生
+ * @param {number} sid 学生ID
+ * @returns {Promise<boolean>} 是否删除成功
+ */
+export async function deleteStudent(sid) {
+    const result = await db.query(
+        `DELETE FROM student WHERE sid = $1 RETURNING sid`,
+        [sid]
+    );
+
+    if (result.rowCount === 0) {
+        throw StudentErrors.NOT_FOUND; // 学生不存在
+    }
+
+    return true;
+}
