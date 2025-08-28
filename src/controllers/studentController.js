@@ -1,19 +1,22 @@
 import * as studentService from '../services/student.js';
 import logger from '../middleware/loggerMiddleware.js';
-import { SystemErrors } from '../config/errorCodes.js';
 import * as ErrorCodes from "../config/errorCodes.js";
 
 export async function addStudentsController(req, res) {
     try {
         const { cid } = req.query;
-        const students = req.body; // body 应为字符串数组
+        const students = req.body;
 
-        const result = await studentService.addStudents({ cid, students });
+        await studentService.addStudents(cid, students);
 
-        res.status(200).json(result);
+        return res.status(200).json({
+            code: 0,
+            message: 'Add students successfully',
+            timestamp: Date.now()
+        });
 
     } catch (error) {
-        logger.error('Error in deleteHomework controller:', error);
+        logger.error('Error in add students controller:', error);
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
                 ...error,

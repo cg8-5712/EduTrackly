@@ -7,40 +7,33 @@ import { StudentErrors, ParamsErrors, ClassErrors } from '../config/errorCodes.j
  * @param {number} cid 班级ID，必填
  * @param {string[]} students 学生名字数组
  */
-export async function addStudents({ cid, students }) {
+
+export async function addStudents(cid, students) {
     if (!cid) {
-        logger.error('CID is required to add students');
+        logger.error('addStudents: cid is required');
         throw ParamsErrors.REQUIRE_CID;
     }
-
-    if (!students || !Array.isArray(students) || students.length === 0) {
-        logger.warn('No students provided to add');
-        return {
-            code: 0,
-            message: 'No students to add',
-            timestamp: Date.now()
-        };
+    if (!Array.isArray(students) || students.length === 0) {
+        throw ParamsErrors.REQUIRE_STUDENT_NAME;
     }
 
-    // 检查 cid 是否存在
-    const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
-    if (studentRes.rows.length === 0) {
-        logger.warn(`CID ${cid} does not exist in class table`);
-        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+    const query = `
+        INSERT INTO student (cid, student_name, attendance)
+        VALUES ($1, $2, $3)
+        RETURNING sid, cid, student_name, attendance
+    `;
+
+    const results = [];
+    for (const stu of students) {
+        if (!stu.student_name) {
+            throw ParamsErrors.REQUIRE_STUDENT_NAME;
+        }
+
+        const attendance = stu.attendance === undefined ? true : stu.attendance;
+
+        const res = await db.query(query, [cid, stu.student_name, attendance]);
+        results.push(res.rows[0]);
     }
-
-
-    const queryText = `INSERT INTO student (cid, student_name) VALUES ($1, $2)`;
-    for (const name of students) {
-        await db.query(queryText, [cid, name]);
-        logger.info(`Added student "${name}" to class ${cid}`);
-    }
-
-    return {
-        code: 0,
-        message: 'Students added successfully',
-        timestamp: Date.now()
-    };
-
+    return results;
 
 }
