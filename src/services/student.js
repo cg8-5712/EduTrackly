@@ -2,6 +2,7 @@ import db from '../utils/db/db_connector.js';
 import logger from '../middleware/loggerMiddleware.js';
 import { StudentErrors, ParamsErrors, ClassErrors } from '../config/errorCodes.js';
 import { formatDatefromsqldatetoyyyymmdd} from "../utils/dateUtils.js";
+import * as pagination from "../utils/pagination.js";
 
 /**
  * 添加学生
@@ -94,4 +95,35 @@ export async function getStudent(sid, student_name) {
         ...student,
         event: events
     };
+}
+
+export async function listStudents({ cid, page, size }) {
+    const { offset } = pagination.getPagination(page, size);
+
+    let whereClause = "";
+    const params = [];
+
+    if (cid) {
+        whereClause = "WHERE cid = $1";
+        params.push(cid);
+    }
+
+    // 查询总数
+    const totalResult = await db.query(
+        `SELECT COUNT(*) AS count FROM student ${whereClause}`,
+        params
+    );
+    const total = parseInt(totalResult.rows[0].count, 10);
+
+    // 查询分页数据
+    const rowsResult = await db.query(
+        `SELECT cid, student_name, attendance 
+         FROM student 
+         ${whereClause}
+         ORDER BY sid ASC 
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, size, offset]
+    );
+
+    return pagination.getPagingData(rowsResult.rows, total, parseInt(page), parseInt(size));
 }

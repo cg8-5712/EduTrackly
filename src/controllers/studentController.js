@@ -63,3 +63,33 @@ export async function getStudentController(req, res) {
         });
     }
 }
+
+export async function getStudentlistController(req, res) {
+    try {
+        const { cid } = req.query;
+        let { page, size } = req.body;
+        const result = await studentService.listStudents({ cid, page, size });
+
+        res.json({
+            code: 0,
+            message: "success",
+            data: result.rows,
+            pagination: result.pagination,
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        logger.error('Error in list students controller:', error);
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        // 未知错误，统一返回 9001
+        res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
+}
