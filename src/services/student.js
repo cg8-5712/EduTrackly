@@ -117,7 +117,7 @@ export async function listStudents({ cid, page, size }) {
 
     // 查询分页数据
     const rowsResult = await db.query(
-        `SELECT cid, student_name, attendance 
+        `SELECT cid, sid, student_name, attendance 
          FROM student 
          ${whereClause}
          ORDER BY sid ASC 
