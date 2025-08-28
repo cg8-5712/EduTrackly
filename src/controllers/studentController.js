@@ -31,3 +31,35 @@ export async function addStudentsController(req, res) {
         });
     }
 }
+
+export async function getStudentController(req, res) {
+    try {
+        const { sid, student_name } = req.query;
+
+        const student = await studentService.getStudent(
+            sid ? parseInt(sid, 10) : undefined,
+            student_name || undefined
+        );
+
+        res.json({
+            code: 0,
+            message: "success",
+            data: student,
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        logger.error('Error in get students controller:', error);
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        // 未知错误，统一返回 9001
+        res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
+}

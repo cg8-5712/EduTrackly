@@ -39,4 +39,5 @@ export const ParamsErrors = {
     REQUIRE_CLASS_NAME_OR_ID: {code: 7005, message: "Required class name or id parameter"},
     TOO_MUCH_PARAMS: { code: 7006, message: "Too much parameters" },
     REQUIRE_STUDENT_NAME: { code: 7007, message: "Required student name parameter" },
+    REQUIRE_STUDENT_NAME_OR_ID: { code: 7008, message: "Required student name or id parameter" },
 }

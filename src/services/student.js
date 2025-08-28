@@ -1,6 +1,7 @@
 import db from '../utils/db/db_connector.js';
 import logger from '../middleware/loggerMiddleware.js';
 import { StudentErrors, ParamsErrors, ClassErrors } from '../config/errorCodes.js';
+import { formatDatefromsqldatetoyyyymmdd} from "../utils/dateUtils.js";
 
 /**
  * 添加学生
@@ -36,4 +37,61 @@ export async function addStudents(cid, students) {
     }
     return results;
 
+}
+
+/**
+ * 获取学生信息
+ * @param {number} sid 学生ID，可选
+ * @param {string} student_name 学生名字，可选
+ * @returns {Promise<object>} 学生及其事件
+ */
+export async function getStudent(sid, student_name) {
+    if (!sid && !student_name) {
+        logger.error("getStudent: sid or student_name required");
+        throw ParamsErrors.REQUIRE_STUDENT_NAME_OR_ID;
+    }
+
+    let studentQuery = `
+        SELECT sid, cid, student_name, attendance
+        FROM student
+        WHERE 1=1
+    `;
+    const params = [];
+    let idx = 1;
+
+    if (sid) {
+        studentQuery += ` AND sid = $${idx++}`;
+        params.push(sid);
+    }
+    if (student_name) {
+        studentQuery += ` AND student_name = $${idx++}`;
+        params.push(student_name);
+    }
+
+    const studentRes = await db.query(studentQuery, params);
+    if (studentRes.rowCount === 0) {
+        throw StudentErrors.NOT_FOUND;
+    }
+
+    const student = studentRes.rows[0];
+
+    // 查询该学生的事件
+    const eventQuery = `
+        SELECT event_date, event_type
+        FROM attendance
+        WHERE sid = $1
+        ORDER BY event_date DESC
+    `;
+    const eventRes = await db.query(eventQuery, [student.sid]);
+
+    // 格式化日期
+    const events = (eventRes.rows || []).map(ev => ({
+        ...ev,
+        event_date: formatDatefromsqldatetoyyyymmdd(ev.event_date)
+    }));
+
+    return {
+        ...student,
+        event: events
+    };
 }
