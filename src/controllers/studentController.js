@@ -93,3 +93,68 @@ export async function getStudentlistController(req, res) {
         });
     }
 }
+
+/**
+ * PUT /student/attendance-change
+ * 更改出勤状态
+ */
+export async function attendanceChangeController(req, res) {
+    try {
+        const { sid, attendance } = req.query;
+
+        if (!sid) {
+            logger.error('Error in attendance change controller: student id is required');
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.REQUIRE_STUDENT_ID,
+                timestamp: Date.now()
+            })
+        }
+
+        if (!attendance) {
+            logger.error('Error in attendance change controller: attendance is required');
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.REQUIRE_STATUS,
+                timestamp: Date.now()
+            });
+        }
+
+        if (attendance !== "true" && attendance !== "false" && attendance !== true && attendance !== false) {
+            logger.error('Error in attendance change controller: attendance is required');
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.REQUIRE_VALID_ATTENDANCE,
+                timestamp: Date.now()
+            });
+        }
+
+        const attendanceBool = attendance === "true" || attendance === true;
+
+        const success = await studentService.changeAttendance(sid, attendanceBool);
+
+        if (!success) {
+            return res.status(404).json({
+                ...ErrorCodes.StudentErrors.NOT_FOUND,
+                timestamp: Date.now()
+            });
+        }
+
+        return res.json({
+            code: 0,
+            message: "Attendance status changed successfully",
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        logger.error('Error in change student attendance controller:', error);
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        // 未知错误，统一返回 9001
+        res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
+}

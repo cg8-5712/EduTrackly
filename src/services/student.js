@@ -127,3 +127,20 @@ export async function listStudents({ cid, page, size }) {
 
     return pagination.getPagingData(rowsResult.rows, total, parseInt(page), parseInt(size));
 }
+
+/**
+ * 更改学生出勤状态
+ * @param {number} sid 学生ID
+ * @param {boolean} attendance 出勤状态
+ * @returns {Promise<boolean>} 是否成功
+ */
+export async function changeAttendance(sid, attendance) {
+    const result = await db.query(
+        `UPDATE student 
+         SET attendance = $1 
+         WHERE sid = $2 
+         RETURNING sid`,
+        [attendance, sid]
+    );
+    return result.rowCount > 0;
+}

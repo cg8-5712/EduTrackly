@@ -37,7 +37,10 @@ export const ParamsErrors = {
     REQUIRE_DATE: {code: 7003, message: "Required due date parameter"},
     REQUIRE_CLASS_NAME: {code: 7004, message: "Required class name parameter"},
     REQUIRE_CLASS_NAME_OR_ID: {code: 7005, message: "Required class name or id parameter"},
-    TOO_MUCH_PARAMS: { code: 7006, message: "Too much parameters" },
-    REQUIRE_STUDENT_NAME: { code: 7007, message: "Required student name parameter" },
-    REQUIRE_STUDENT_NAME_OR_ID: { code: 7008, message: "Required student name or id parameter" },
+    TOO_MUCH_PARAMS: {code: 7006, message: "Too much parameters"},
+    REQUIRE_STUDENT_NAME: {code: 7007, message: "Required student name parameter"},
+    REQUIRE_STUDENT_NAME_OR_ID: {code: 7008, message: "Required student name or id parameter"},
+    REQUIRE_STUDENT_ID: {code: 7009, message: "Required student id parameter"},
+    REQUIRE_STATUS: {code: 7010, message: "Required status parameter"},
+    REQUIRE_VALID_ATTENDANCE: {code: 7011, message: "Attendance must be true or false"},
 }
