@@ -1,8 +1,7 @@
 import * as classService from '../services/class.js';
 import logger from "../middleware/loggerMiddleware.js";
 import * as ErrorCodes from "../config/errorCodes.js";
-import moment from 'moment';
-import * as homeworkService from "../services/homework.js";
+import { listStudents } from "../services/student.js";
 
 export async function createClassController(req, res) {
     const { class_name } = req.query;
@@ -24,13 +23,13 @@ export async function createClassController(req, res) {
         timestamp: Date.now()
     });
 }
+
 export async function getClassController(req, res) {
     try {
         const { cid, class_name } = req.query;
 
         logger.info(`getClassController input cid=${cid}, class_name=${class_name}`);
 
-        // 参数检查
         if (!cid && !class_name) {
             logger.error("getClassController param is empty");
             return res.status(400).json({
@@ -47,23 +46,28 @@ export async function getClassController(req, res) {
             });
         }
 
-        // 只有一个参数时，直接作为查询参数传给 service
         const param = parseInt(cid) || class_name;
         logger.info(`getClassController param used: ${typeof param}`);
 
-        const result = await classService.getClass(param);
+        const class_result = await classService.getClass(param);
+
+        const student_result = await listStudents({ cid: cid, page: 1, size: 100000 });
+
+        logger.debug(`getClassController: ${JSON.stringify(student_result.rows)}`);
+
+        // 🔑 把学生信息挂到 class_result.data.students
+        class_result.data.students = student_result.rows || [];
 
         return res.status(200).json({
-            code: result.code,
-            message: result.message,
-            data: result.data,
+            code: 0,
+            message: class_result.message,
+            data: class_result.data,
             timestamp: Date.now()
         });
 
     } catch (error) {
         logger.error('Error in getClass controller:', error);
 
-        // 如果 error 是我们自定义的错误格式
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
                 ...error,
@@ -71,13 +75,14 @@ export async function getClassController(req, res) {
             });
         }
 
-        // 未知错误 → 9001
         return res.status(500).json({
             ...ErrorCodes.SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }
 }
+
+
 
 // controller 层
 export async function listClass(req, res) {

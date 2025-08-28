@@ -125,6 +125,8 @@ export async function listStudents({ cid, page, size }) {
         [...params, size, offset]
     );
 
+    logger.debug(`listStudents: ${rowsResult.rows.length} rows returned`);
+
     return pagination.getPagingData(rowsResult.rows, total, parseInt(page), parseInt(size));
 }
 
