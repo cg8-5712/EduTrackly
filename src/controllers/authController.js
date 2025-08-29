@@ -1,6 +1,7 @@
 import { authenticateUser } from "../services/auth.js";
 import logger from "../middleware/loggerMiddleware.js";
 import * as ErrorCodes from "../config/errorCodes.js";
+import { handleControllerError } from "../middleware/error_handler.js";
 
 /**
  * Handle user login
@@ -51,9 +52,7 @@ export async function login(req, res) {
             stack: error.stack
         });
 
-        return res.status(500).json({
-            ...ErrorCodes.SystemErrors.INTERNAL,
-            timestamp: Date.now()
-        });
+        handleControllerError(error, res);
+
     }
 }
