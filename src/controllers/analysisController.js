@@ -1,7 +1,7 @@
-import { getTodayAnalysis, getClassAnalysis } from '../services/analysis.js';
+import { getTodayAnalysis, getClassAnalysis, getStudentsAnalysis } from '../services/analysis.js';
 import logger from "../middleware/loggerMiddleware.js";
 import * as ErrorCodes from "../config/errorCodes.js";
-import {formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate} from "../utils/dateUtils.js";
+import { formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate} from "../utils/dateUtils.js";
 import moment from "moment";
 
 export async function getToday(req, res) {
@@ -63,8 +63,62 @@ export async function getClassAnalysisController(req, res) {
             data,
             timestamp: Date.now()
         });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ code: 1, message: "internal server error", timestamp: Date.now() });
+    } catch (error) {
+        logger.error('Error in getClassAnalysis controller:', error);
+
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        // 未知错误，统一返回 9001
+        res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
+    }
+}
+
+export async function getStudentsAnalysisController(req, res) {
+    try {
+        let { cid, startDate, endDate } = req.query;
+
+        if (startDate) {
+            startDate = formatDatefromyyyymmddtopsqldate(startDate);
+        }
+        if (endDate) {
+            endDate = formatDatefromyyyymmddtopsqldate(endDate);
+        }
+
+        if (!endDate) {
+            endDate = formatDatefromyyyymmddtopsqldate(moment().format('YYYYMMDD'));
+        }
+
+        // 不再强制要求参数，可全部为空
+        const students = await getStudentsAnalysis({ cid, startDate, endDate });
+
+        return res.status(200).json({
+            code: 0,
+            message: "Get students analysis successfully",
+            students,
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        logger.error('Error in getStudentsAnalysis controller:', error);
+
+        if (error.code && error.message && typeof error.code === 'number') {
+            return res.status(400).json({
+                ...error,
+                timestamp: Date.now()
+            });
+        }
+
+        // 未知错误，统一返回 9001
+        res.status(500).json({
+            ...ErrorCodes.SystemErrors.INTERNAL,
+            timestamp: Date.now()
+        });
     }
 }

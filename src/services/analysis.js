@@ -1,6 +1,7 @@
 import db from '../utils/db/db_connector.js';
 import logger from "../middleware/loggerMiddleware.js";
 import {ClassErrors} from "../config/errorCodes.js";
+import { formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate} from "../utils/dateUtils.js";
 
 export async function getTodayAnalysis(cid, date) {
 
@@ -157,4 +158,72 @@ export async function getClassAnalysis(cid) {
 
     const result = await db.query(sql, [cid]);
     return result.rows[0];
+}
+
+/**
+ * 获取学生信息及事件统计
+ * @param {number} cid 班级ID，可选
+ * @param {string|number} startDate 起始日期 YYYYMMDD，可选
+ * @param {string|number} endDate 截止日期 YYYYMMDD，可选
+ */
+export async function getStudentsAnalysis({ cid, startDate, endDate }) {
+    const params = [];
+    let idx = 1;
+
+    let whereClause = "WHERE 1=1";
+
+    if (cid !== undefined && cid !== null && cid !== "") {
+        whereClause += ` AND s.cid = $${idx++}`;
+        params.push(parseInt(cid, 10));
+    }
+
+    if (startDate !== undefined && startDate !== null && startDate !== "") {
+        whereClause += ` AND a.event_date >= $${idx++}`;
+        params.push(startDate);
+    }
+
+    if (endDate !== undefined && endDate !== null && endDate !== "") {
+        whereClause += ` AND a.event_date <= $${idx++}`;
+        params.push(endDate);
+    }
+
+    const query = `
+        SELECT
+            s.sid,
+            s.student_name,
+            s.attendance,
+            COALESCE(SUM(CASE WHEN a.event_type = 'official' THEN 1 ELSE 0 END),0) AS official_cnt,
+            COALESCE(SUM(CASE WHEN a.event_type = 'personal' THEN 1 ELSE 0 END),0) AS personal_cnt,
+            COALESCE(SUM(CASE WHEN a.event_type = 'sick' THEN 1 ELSE 0 END),0) AS sick_cnt,
+            COALESCE(SUM(CASE WHEN a.event_type = 'temp' THEN 1 ELSE 0 END),0) AS temp_cnt,
+            COALESCE(JSON_AGG(CASE WHEN a.event_type = 'official' THEN a.event_date ELSE NULL END) FILTER (WHERE a.event_type = 'official'), '[]') AS official_list,
+            COALESCE(JSON_AGG(CASE WHEN a.event_type = 'personal' THEN a.event_date ELSE NULL END) FILTER (WHERE a.event_type = 'personal'), '[]') AS personal_list,
+            COALESCE(JSON_AGG(CASE WHEN a.event_type = 'sick' THEN a.event_date ELSE NULL END) FILTER (WHERE a.event_type = 'sick'), '[]') AS sick_list,
+            COALESCE(JSON_AGG(CASE WHEN a.event_type = 'temp' THEN a.event_date ELSE NULL END) FILTER (WHERE a.event_type = 'temp'), '[]') AS temp_list
+        FROM student s
+                 LEFT JOIN attendance a ON s.sid = a.sid
+            ${whereClause}
+        GROUP BY s.sid, s.student_name, s.attendance
+        ORDER BY s.sid ASC
+    `;
+
+    const result = await db.query(query, params);
+
+    return result.rows.map(r => ({
+        sid: r.sid,
+        student_name: r.student_name,
+        attendance: r.attendance,
+        event_time: {
+            official_cnt: parseInt(r.official_cnt, 10),
+            personal_cnt: parseInt(r.personal_cnt, 10),
+            sick_cnt: parseInt(r.sick_cnt, 10),
+            temp_cnt: parseInt(r.temp_cnt, 10)
+        },
+        event_list: {
+            official_list: r.official_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
+            personal_list: r.personal_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
+            sick_list: r.sick_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
+            temp_list: r.temp_list.map(d => formatDatefromsqldatetoyyyymmdd(d))
+        }
+    }));
 }

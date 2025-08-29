@@ -215,7 +215,7 @@ export async function putStudentEventController(req, res) {
             });
         }
 
-        if (error.code === "23503") {
+        if (error.code === "P0001") {
             return res.status(400).json({
                 ...ErrorCodes.ParamsErrors.INVALID_EVENT_TYPE_FOR_PERMANENT_ABSENT_STUDENT,
                 timestamp: Date.now()
