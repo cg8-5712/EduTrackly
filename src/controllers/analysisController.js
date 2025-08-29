@@ -1,4 +1,4 @@
-import { getTodayAnalysis } from '../services/analysis.js';
+import { getTodayAnalysis, getClassAnalysis } from '../services/analysis.js';
 import logger from "../middleware/loggerMiddleware.js";
 import * as ErrorCodes from "../config/errorCodes.js";
 import {formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate} from "../utils/dateUtils.js";
@@ -42,5 +42,29 @@ export async function getToday(req, res) {
             ...ErrorCodes.SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
+    }
+}
+
+export async function getClassAnalysisController(req, res) {
+    try {
+        const { cid } = req.query;
+        if (!cid) {
+            return res.status(400).json({ code: 1, message: "cid is required", timestamp: Date.now() });
+        }
+
+        const data = await getClassAnalysis(cid);
+        if (!data) {
+            return res.status(404).json({ code: 1, message: "class not found", timestamp: Date.now() });
+        }
+
+        res.json({
+            code: 0,
+            message: "success",
+            data,
+            timestamp: Date.now()
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ code: 1, message: "internal server error", timestamp: Date.now() });
     }
 }

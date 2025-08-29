@@ -79,3 +79,75 @@ export async function getTodayAnalysis(cid, date) {
         timestamp: Date.now(),
     };
 }
+
+export async function getClassAnalysis(cid) {
+    const sql = `
+    WITH class_info AS (
+      SELECT c.cid, c.class_name
+      FROM class c
+      WHERE c.cid = $1
+    ),
+    student_info AS (
+      SELECT s.sid, s.student_name, s.cid, s.attendance
+      FROM student s
+      WHERE s.cid = $1
+    ),
+    -- 今天的考勤
+    today_attendance AS (
+      SELECT a.sid, a.event_type
+      FROM attendance a
+      WHERE a.event_date = CURRENT_DATE
+    ),
+    -- 今日正常到课学生（在 student.attendance = true 且今天没有请假记录）
+    today_attend AS (
+      SELECT s.sid, s.student_name
+      FROM student_info s
+      WHERE s.attendance = true
+        AND NOT EXISTS (
+          SELECT 1 FROM today_attendance t
+          WHERE t.sid = s.sid
+            AND t.event_type IN ('official','personal','sick')
+        )
+    ),
+    -- 今日缺席学生（有 official/personal/sick 记录）
+    today_absent AS (
+      SELECT s.sid, s.student_name, t.event_type
+      FROM student_info s
+      JOIN today_attendance t ON s.sid = t.sid
+      WHERE t.event_type IN ('official','personal','sick')
+    ),
+    -- 今日临时到课学生（temp）
+    today_temp AS (
+      SELECT s.sid, s.student_name
+      FROM student_info s
+      JOIN today_attendance t ON s.sid = t.sid
+      WHERE t.event_type = 'temp'
+    )
+    SELECT 
+      ci.cid,
+      ci.class_name,
+      -- 班级总人数
+      (SELECT COUNT(*)::int FROM student_info) AS student_num,
+      -- 应到人数：student.attendance = true
+      (SELECT COUNT(*)::int FROM student_info WHERE attendance = true) AS expected_attend,
+      -- 所有登记出勤的学生（含 attendance=true）
+      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name)), '[]')
+       FROM student_info WHERE attendance = true) AS attend_student,
+      -- 所有登记不出勤的学生（attendance=false）
+      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name)), '[]')
+       FROM student_info WHERE attendance = false) AS absent_student,
+      -- 今日实际到课
+      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name)), '[]')
+       FROM today_attend) AS today_attend,
+      -- 今日缺席
+      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name, 'event_type', event_type)), '[]')
+       FROM today_absent) AS today_absent,
+      -- 今日临时
+      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name)), '[]')
+       FROM today_temp) AS today_temp
+    FROM class_info ci
+  `;
+
+    const result = await db.query(sql, [cid]);
+    return result.rows[0];
+}
