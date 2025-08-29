@@ -1,62 +1,76 @@
 import { getTodayAnalysis, getClassAnalysis, getStudentsAnalysis } from '../services/analysis.js';
 import logger from "../middleware/loggerMiddleware.js";
 import * as ErrorCodes from "../config/errorCodes.js";
-import { formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate} from "../utils/dateUtils.js";
+import { handleControllerError } from "../middleware/error_handler.js";
+import { formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate } from "../utils/dateUtils.js";
 import moment from "moment";
 
+/**
+ * Get today's analysis for a specific class
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 export async function getToday(req, res) {
-    try {
-        let { cid, date } = req.query;
+    const { cid, date } = req.query;
+    logger.debug('getToday analysis requested', { cid, date });
 
+    try {
         if (!cid) {
-            logger.error('Error in getToday controller: cid is missing');
+            logger.warn('Missing cid in getToday request');
             return res.status(400).json({
                 ...ErrorCodes.ParamsErrors.REQUIRE_CID,
                 timestamp: Date.now()
             });
         }
 
-        // 默认日期为今日
-        if (!date) {
-            date = moment().format('YYYYMMDD');
-        }
+        const targetDate = date || moment().format('YYYYMMDD');
+        logger.info(`Fetching analysis for class ${cid} on date ${targetDate}`);
 
-        logger.info(`Getting today's analysis for class ${cid} on date ${date}`);
-
-        const data = await getTodayAnalysis(cid, formatDatefromyyyymmddtopsqldate(date));
+        const data = await getTodayAnalysis(cid, formatDatefromyyyymmddtopsqldate(targetDate));
+        logger.debug('Analysis data retrieved successfully', { cid, targetDate });
 
         res.status(200).json(data);
 
     } catch (error) {
-        logger.error('Error in getToday controller:', error);
+        logger.error('Failed to get today\'s analysis:', { 
+            error: error.message,
+            cid,
+            date,
+            stack: error.stack
+        });
 
-        if (error.code && error.message && typeof error.code === 'number') {
+        handleControllerError(error, res);
+    }
+}
+
+/**
+ * Get class analysis
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function getClassAnalysisController(req, res) {
+    const { cid } = req.query;
+    logger.debug('Class analysis requested', { cid });
+
+    try {
+        if (!cid) {
+            logger.warn('Missing cid in class analysis request');
             return res.status(400).json({
-                ...error,
+                ...ErrorCodes.ParamsErrors.REQUIRE_CID,
                 timestamp: Date.now()
             });
         }
 
-        // 未知错误，统一返回 9001
-        res.status(500).json({
-            ...ErrorCodes.SystemErrors.INTERNAL,
-            timestamp: Date.now()
-        });
-    }
-}
-
-export async function getClassAnalysisController(req, res) {
-    try {
-        const { cid } = req.query;
-        if (!cid) {
-            return res.status(400).json({ code: 1, message: "cid is required", timestamp: Date.now() });
-        }
-
         const data = await getClassAnalysis(cid);
         if (!data) {
-            return res.status(404).json({ code: 1, message: "class not found", timestamp: Date.now() });
+            logger.warn(`No data found for class ${cid}`);
+            return res.status(404).json({
+                ...ErrorCodes.DataErrors.CLASS_NOT_FOUND,
+                timestamp: Date.now()
+            });
         }
 
+        logger.info(`Successfully retrieved analysis for class ${cid}`);
         res.json({
             code: 0,
             message: "success",
@@ -64,40 +78,40 @@ export async function getClassAnalysisController(req, res) {
             timestamp: Date.now()
         });
     } catch (error) {
-        logger.error('Error in getClassAnalysis controller:', error);
-
-        if (error.code && error.message && typeof error.code === 'number') {
-            return res.status(400).json({
-                ...error,
-                timestamp: Date.now()
-            });
-        }
-
-        // 未知错误，统一返回 9001
-        res.status(500).json({
-            ...ErrorCodes.SystemErrors.INTERNAL,
-            timestamp: Date.now()
+        logger.error('Failed to get class analysis:', {
+            error: error.message,
+            cid,
+            stack: error.stack
         });
+
+        handleControllerError(error, res);
     }
 }
 
+/**
+ * Get students analysis
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 export async function getStudentsAnalysisController(req, res) {
-    try {
-        let { cid, startDate, endDate } = req.query;
+    let { cid, startDate, endDate } = req.query;
+    logger.debug('Students analysis requested', { cid, startDate, endDate });
 
+    try {
         if (startDate) {
             startDate = formatDatefromyyyymmddtopsqldate(startDate);
         }
-        if (endDate) {
-            endDate = formatDatefromyyyymmddtopsqldate(endDate);
-        }
 
-        if (!endDate) {
-            endDate = formatDatefromyyyymmddtopsqldate(moment().format('YYYYMMDD'));
-        }
+        endDate = endDate 
+            ? formatDatefromyyyymmddtopsqldate(endDate)
+            : formatDatefromyyyymmddtopsqldate(moment().format('YYYYMMDD'));
 
-        // 不再强制要求参数，可全部为空
+        logger.info('Fetching students analysis', { cid, startDate, endDate });
         const students = await getStudentsAnalysis({ cid, startDate, endDate });
+
+        logger.debug('Students analysis retrieved successfully', {
+            studentCount: students.length
+        });
 
         return res.status(200).json({
             code: 0,
@@ -106,19 +120,14 @@ export async function getStudentsAnalysisController(req, res) {
             timestamp: Date.now()
         });
     } catch (error) {
-        logger.error('Error in getStudentsAnalysis controller:', error);
-
-        if (error.code && error.message && typeof error.code === 'number') {
-            return res.status(400).json({
-                ...error,
-                timestamp: Date.now()
-            });
-        }
-
-        // 未知错误，统一返回 9001
-        res.status(500).json({
-            ...ErrorCodes.SystemErrors.INTERNAL,
-            timestamp: Date.now()
+        logger.error('Failed to get students analysis:', {
+            error: error.message,
+            cid,
+            startDate,
+            endDate,
+            stack: error.stack
         });
+
+        handleControllerError(error, res);
     }
 }
