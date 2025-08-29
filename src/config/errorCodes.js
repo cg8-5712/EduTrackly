@@ -45,4 +45,5 @@ export const ParamsErrors = {
     REQUIRE_VALID_ATTENDANCE: {code: 7011, message: "Attendance must be true or false"},
     REQUIRE_EVENT_TYPE: {code: 7012, message: "Required event type parameter"},
     ILLEGAL_EVENT_TYPE: {code: 7013, message: "Illegal event type parameter"},
+    INVALID_EVENT_TYPE_FOR_PERMANENT_ABSENT_STUDENT: {code: 7014, message: "Invalid event type for permanent absent student"},
 }

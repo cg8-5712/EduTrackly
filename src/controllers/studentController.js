@@ -208,6 +208,13 @@ export async function putStudentEventController(req, res) {
     } catch (error) {
         logger.error("Error in putStudentEventController:", error);
 
+        if (error.code === "23503") {
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.INVALID_EVENT_TYPE_FOR_PERMANENT_ABSENT_STUDENT,
+                timestamp: Date.now()
+            });
+        }
+
         if (error.code && error.message) {
             return res.status(400).json({
                 ...error,

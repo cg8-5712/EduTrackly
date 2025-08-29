@@ -14,10 +14,10 @@ INSERT INTO class (class_name) VALUES
 
 -- Students
 INSERT INTO student (cid, student_name, attendance) VALUES
-                                            (1, 'Alice'),
+                                            (1, 'Alice', true),
                                             (1, 'Bob', false),
-                                            (2, 'Charlie'),
-                                            (2, 'Diana');
+                                            (2, 'Charlie', true),
+                                            (2, 'Diana', true);
 
 -- Homework
 INSERT INTO homework (cid, description, due_date) VALUES
