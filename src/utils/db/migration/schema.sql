@@ -44,14 +44,37 @@ CREATE TABLE class (
 -- ================= Attendance Table =================
 CREATE TYPE event_type AS ENUM ('official', 'personal', 'sick', 'temp');
 
-
-
 CREATE TABLE attendance (
                             sid INT NOT NULL REFERENCES student(sid) ON DELETE CASCADE,
                             event_date DATE NOT NULL DEFAULT CURRENT_DATE,
                             event_type event_type NOT NULL,
                             CONSTRAINT uniq_attendance UNIQUE (sid, event_date)
 );
+
+-- 触发器函数
+CREATE OR REPLACE FUNCTION check_temp_constraint()
+RETURNS TRIGGER AS $$
+DECLARE
+student_attendance BOOLEAN;
+BEGIN
+    -- 查询该学生的 attendance 状态
+SELECT attendance INTO student_attendance
+FROM student WHERE sid = NEW.sid;
+
+-- 如果学生是固定考勤 (attendance=true)，则不允许插入 temp
+IF NEW.event_type = 'temp' AND student_attendance = true THEN
+        RAISE EXCEPTION 'Student with sid % has attendance=true, cannot assign temp', NEW.sid;
+END IF;
+
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 在插入或更新 attendance 时触发
+CREATE TRIGGER trg_check_temp_constraint
+    BEFORE INSERT OR UPDATE ON attendance
+                         FOR EACH ROW
+                         EXECUTE FUNCTION check_temp_constraint();
 
 -- ================= Indexes =================
 CREATE INDEX IF NOT EXISTS idx_admin_aid ON admin(aid);

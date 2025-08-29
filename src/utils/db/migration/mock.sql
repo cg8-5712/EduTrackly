@@ -13,9 +13,9 @@ INSERT INTO class (class_name) VALUES
                                    ('Class2');
 
 -- Students
-INSERT INTO student (cid, student_name) VALUES
+INSERT INTO student (cid, student_name, attendance) VALUES
                                             (1, 'Alice'),
-                                            (1, 'Bob'),
+                                            (1, 'Bob', false),
                                             (2, 'Charlie'),
                                             (2, 'Diana');
 
