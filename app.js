@@ -7,6 +7,7 @@ import homeworkRoutes from "./src/routes/homework.js";
 import authRoutes from "./src/routes/auth.js";
 import classRoutes from "./src/routes/class.js";
 import studentRoutes from "./src/routes/student.js";
+import analysisRoutes from "./src/routes/analysis.js";
 
 const app = express();
 
@@ -18,5 +19,6 @@ app.use(config.route.prefix + "/homework", homeworkRoutes);
 app.use(config.route.prefix + "/auth", authRoutes);
 app.use(config.route.prefix + "/class", classRoutes);
 app.use(config.route.prefix + "/student", studentRoutes);
+app.use(config.route.prefix + "/analysis", analysisRoutes);
 
 export default app;
