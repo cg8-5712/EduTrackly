@@ -36,8 +36,7 @@ export async function authenticateUser(password, ip) {
 
             if (config.app.env === "debug") {
                 logger.debug(`User ${admin.aid} logged in from ${ip} with token ${token} and expires in ${expiresIn} seconds`);
-            }
-            else {
+            } else {
                 logger.info(`User ${admin.aid} logged successfully`);
             }
 
