@@ -182,7 +182,6 @@ export async function putStudentEvents(events) {
             throw ParamsErrors.REQUIRE_EVENT_TYPE;
         }
 
-        // 校验 event_type 必须是 ENUM 里的值
         const allowed = ["official", "personal", "sick", "temp"];
         if (!allowed.includes(event.event_type)) {
             throw ParamsErrors.ILLEGAL_EVENT_TYPE;
@@ -190,12 +189,14 @@ export async function putStudentEvents(events) {
 
         params.push(event.sid, event.event_type);
         const offset = i * 2;
-        values.push(`($${offset + 1}, $${offset + 2})`);
+        values.push(`($${offset + 1}, CURRENT_DATE, $${offset + 2})`);
     });
 
     const query = `
         INSERT INTO attendance (sid, event_date, event_type)
-        VALUES ${values.map(v => `${v.split(",")[0]}, CURRENT_DATE, ${v.split(",")[1]}`).join(", ")}
+        VALUES ${values.join(", ")}
+        ON CONFLICT (sid, event_date)
+        DO UPDATE SET event_type = EXCLUDED.event_type
     `;
 
     logger.debug(`putStudentEvents: ${query} with params ${params}`);

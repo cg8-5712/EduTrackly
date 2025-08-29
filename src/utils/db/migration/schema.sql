@@ -44,10 +44,13 @@ CREATE TABLE class (
 -- ================= Attendance Table =================
 CREATE TYPE event_type AS ENUM ('official', 'personal', 'sick', 'temp');
 
+
+
 CREATE TABLE attendance (
                             sid INT NOT NULL REFERENCES student(sid) ON DELETE CASCADE,
                             event_date DATE NOT NULL DEFAULT CURRENT_DATE,
-                            event_type event_type NOT NULL
+                            event_type event_type NOT NULL,
+                            CONSTRAINT uniq_attendance UNIQUE (sid, event_date)
 );
 
 -- ================= Indexes =================
