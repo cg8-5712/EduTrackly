@@ -38,6 +38,13 @@ export const StudentErrors = {
 export const ClassErrors = {
     NOT_FOUND: { code: 4001, message: "Class not found" },
     ALREADY_EXIST: { code: 4002, message: "Class name already exist" },
+    DELETE_FAILED: { code: 4003, message: "Failed to delete class" },
+    UPDATE_FAILED: { code: 4004, message: "Failed to update class" },
+    INVALID_CLASS_SIZE: { code: 4005, message: "Invalid class size" },
+    MAX_STUDENTS_REACHED: { code: 4006, message: "Maximum number of students reached" },
+    DUPLICATE_STUDENT: { code: 4007, message: "Student already exists in class" },
+    NO_STUDENTS_FOUND: { code: 4008, message: "No students found in class" }
+
 };
 
 export const SystemErrors = {
@@ -66,4 +73,8 @@ export const ParamsErrors = {
     REQUIRE_EVENT_TYPE: {code: 7012, message: "Required event type parameter"},
     ILLEGAL_EVENT_TYPE: {code: 7013, message: "Illegal event type parameter"},
     INVALID_EVENT_TYPE_FOR_PERMANENT_ABSENT_STUDENT: {code: 7014, message: "Invalid event type for permanent absent student"},
+    INVALID_PAGE_NUMBER: { code: 7015, message: "Invalid page number" },
+    INVALID_PAGE_SIZE: { code: 7016, message: "Invalid page size" },
+    INVALID_SORT_ORDER: { code: 7017, message: "Sort order must be 'asc' or 'desc'" }
+
 }
