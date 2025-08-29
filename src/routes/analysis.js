@@ -3,6 +3,6 @@ import { getToday } from '../controllers/analysisController.js';
 import jwtRequire from '../middleware/jwt_require.js';
 const router = express.Router();
 
-router.get('/today', getToday);
+router.get('/basic', getToday);
 
 export default router;

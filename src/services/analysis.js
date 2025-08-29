@@ -2,7 +2,7 @@ import db from '../utils/db/db_connector.js';
 import logger from "../middleware/loggerMiddleware.js";
 import {ClassErrors} from "../config/errorCodes.js";
 
-export async function getTodayAnalysis(cid) {
+export async function getTodayAnalysis(cid, date) {
 
     const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (studentRes.rows.length === 0) {
@@ -31,14 +31,14 @@ export async function getTodayAnalysis(cid) {
                      FROM attendance a
                               JOIN student s ON a.sid = s.sid
                      WHERE s.cid = $1
-                       AND a.event_date = CURRENT_DATE
+                       AND a.event_date = $2
                  ),
                  events AS (
                      SELECT s.student_name, a.event_type
                      FROM student s
                               JOIN attendance a ON s.sid = a.sid
                      WHERE s.cid = $1
-                       AND a.event_date = CURRENT_DATE
+                       AND a.event_date = $2
                  )
             SELECT
                 ci.cid,
@@ -69,7 +69,7 @@ export async function getTodayAnalysis(cid) {
                      LEFT JOIN events ev ON true
             GROUP BY ci.cid, ci.class_name, e.expected_attend, ec.official_cnt, ec.personal_cnt, ec.sick_cnt, ec.temp_cnt;
         `,
-        [cid]
+        [cid, date]
     );
 
     return {

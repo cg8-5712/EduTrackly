@@ -4,7 +4,7 @@ import logger from "../middleware/loggerMiddleware.js";
 export function formatDatefromyyyymmddtopsqldate(date) {
     if (typeof date !== 'string' || date.length !== 8) {
         logger.error(JSON.stringify(FormatErrors.NOT_YYYYMMDD_DATE));
-        throw new Error(JSON.stringify(FormatErrors.NOT_YYYYMMDD_DATE));
+        throw FormatErrors.NOT_YYYYMMDD_DATE;
     }
     const year = date.substring(0, 4);
     const month = date.substring(4, 6);
@@ -17,7 +17,7 @@ export function formatDatefromsqldatetoyyyymmdd(date) {
     const utcDate = new Date(date);
     if (isNaN(utcDate.getTime())) {
         logger.error(JSON.stringify(FormatErrors.NOT_YYYYMMDDHHMMSS_DATE));
-        throw new Error(JSON.stringify(FormatErrors.NOT_YYYYMMDDHHMMSS_DATE));
+        throw FormatErrors.NOT_YYYYMMDDHHMMSS_DATE;
     }
 
     // 将 UTC 时间转换为本地时间
