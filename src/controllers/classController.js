@@ -2,36 +2,60 @@ import * as classService from '../services/class.js';
 import logger from "../middleware/loggerMiddleware.js";
 import * as ErrorCodes from "../config/errorCodes.js";
 import { listStudents } from "../services/student.js";
+import { handleControllerError } from "../middleware/error_handler.js";
 
+/**
+ * Create a new class
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 export async function createClassController(req, res) {
     const { class_name } = req.query;
+    logger.debug('Create class request received', { class_name });
 
-    if (!class_name) {
-        logger.error("createClassController class_name is empty");
-        return res.status(400).json({
-            ...ErrorCodes.ParamsErrors.REQUIRE_CLASS_NAME,
+    try {
+        if (!class_name) {
+            logger.warn('Create class attempt without name');
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.REQUIRE_CLASS_NAME,
+                timestamp: Date.now()
+            });
+        }
+
+        logger.info('Creating new class', { class_name });
+        const result = await classService.createClass(class_name);
+        logger.debug('Class created successfully', { class_id: result.data?.id });
+
+        return res.status(200).json({
+            code: result.code,
+            message: result.message,
+            data: result.data,
             timestamp: Date.now()
-        })
+        });
+    } catch (error) {
+        logger.error('Failed to create class', {
+            error: error.message,
+            class_name,
+            stack: error.stack
+        });
+        
+        handleControllerError(error, res);
     }
-
-    const result = await classService.createClass(class_name);
-
-    res.status(200).json({
-        code: result.code,
-        message: result.message,
-        data: result.data,
-        timestamp: Date.now()
-    });
 }
 
+/**
+ * Get class details with students
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 export async function getClassController(req, res) {
+    const { cid, class_name } = req.query;
+    logger.debug('Get class request received', { cid, class_name });
+
     try {
-        const { cid, class_name } = req.query;
-
-        logger.info(`getClassController input cid=${cid}, class_name=${class_name}`);
-
+        // Parameter validation
         if (!cid && !class_name) {
-            logger.error("getClassController param is empty");
+            logger.warn('Get class attempt without identifier');
             return res.status(400).json({
                 ...ErrorCodes.ParamsErrors.REQUIRE_CLASS_NAME_OR_ID,
                 timestamp: Date.now()
@@ -39,7 +63,7 @@ export async function getClassController(req, res) {
         }
 
         if (cid && class_name) {
-            logger.error("getClassController param is both cid and class_name");
+            logger.warn('Get class attempt with multiple identifiers');
             return res.status(400).json({
                 ...ErrorCodes.ParamsErrors.TOO_MUCH_PARAMS,
                 timestamp: Date.now()
@@ -47,15 +71,17 @@ export async function getClassController(req, res) {
         }
 
         const param = parseInt(cid) || class_name;
-        logger.info(`getClassController param used: ${typeof param}`);
+        logger.info('Fetching class details', { param });
 
         const class_result = await classService.getClass(param);
+        const student_result = await listStudents({ cid, page: 1, size: 100000 });
 
-        const student_result = await listStudents({ cid: cid, page: 1, size: 100000 });
+        logger.debug('Class and students retrieved', { 
+            class_id: class_result.data?.id,
+            student_count: student_result.rows?.length 
+        });
 
-        logger.debug(`getClassController: ${JSON.stringify(student_result.rows)}`);
-
-        // 🔑 把学生信息挂到 class_result.data.students
+        // Attach students to class data
         class_result.data.students = student_result.rows || [];
 
         return res.status(200).json({
@@ -66,58 +92,69 @@ export async function getClassController(req, res) {
         });
 
     } catch (error) {
-        logger.error('Error in getClass controller:', error);
-
-        if (error.code && error.message && typeof error.code === 'number') {
-            return res.status(400).json({
-                ...error,
-                timestamp: Date.now()
-            });
-        }
-
-        return res.status(500).json({
-            ...ErrorCodes.SystemErrors.INTERNAL,
-            timestamp: Date.now()
+        logger.error('Failed to get class details', {
+            error: error.message,
+            cid,
+            class_name,
+            stack: error.stack
         });
+
+        handleControllerError(error, res);
     }
 }
 
-
-
-// controller 层
+/**
+ * List all classes with pagination
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 export async function listClass(req, res) {
-    try {
-        const { order = 'asc' } = req.query;  // 排序方式从 query 取，默认升序
-        const { page = 1, size = 20 } = req.body; // 分页信息从 body 取
+    const { order = 'asc' } = req.query;
+    const { page = 1, size = 20 } = req.body;
+    
+    logger.debug('List classes request received', { order, page, size });
 
+    try {
+        logger.info('Fetching class list', { order, page, size });
         const result = await classService.listClass({ order, page, size });
 
-        logger.info(`Get class list successfully, order=${order}, page=${page}, size=${size}`);
-        logger.debug(`Class list: ${JSON.stringify(result.data)}`);
-        logger.debug(`Pagination: ${JSON.stringify(result.pagination)}`);
+        logger.debug('Classes retrieved successfully', {
+            total_count: result.data?.length,
+            page,
+            size
+        });
 
-        res.json({
+        return res.json({
             code: 0,
-            message: 'Class list fetched successfully',
+            message: 'Classes retrieved successfully',
             data: result.data,
             pagination: result.pagination,
             timestamp: Date.now()
         });
     } catch (error) {
-        logger.error('Failed to list class:', error);
-        res.status(500).json({
-            ...ErrorCodes.SystemErrors.INTERNAL,
-            timestamp: Date.now()
+        logger.error('Failed to list classes', {
+            error: error.message,
+            order,
+            page,
+            size,
+            stack: error.stack
         });
+        handleControllerError(error, res);
     }
 }
 
+/**
+ * Delete a class
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 export async function deleteClassController(req, res) {
-    try {
-        const { cid, class_name } = req.query;
+    const { cid, class_name } = req.query;
+    logger.debug('Delete class request received', { cid, class_name });
 
-        // 参数检查
+    try {
         if (!cid && !class_name) {
+            logger.warn('Delete class attempt without identifier');
             return res.status(400).json({
                 ...ErrorCodes.ParamsErrors.REQUIRE_CLASS_NAME_OR_ID,
                 timestamp: Date.now()
@@ -125,6 +162,7 @@ export async function deleteClassController(req, res) {
         }
 
         if (cid && class_name) {
+            logger.warn('Delete class attempt with multiple identifiers');
             return res.status(400).json({
                 ...ErrorCodes.ParamsErrors.TOO_MUCH_PARAMS,
                 timestamp: Date.now()
@@ -132,17 +170,24 @@ export async function deleteClassController(req, res) {
         }
 
         const param = cid ? { cid } : { class_name };
+        logger.info('Deleting class', param);
 
         const result = await classService.deleteClass(param);
+        logger.debug('Class deleted successfully', param);
 
-        res.json({
+        return res.json({
             code: result.code,
             message: result.message,
             timestamp: Date.now()
         });
 
     } catch (error) {
-        logger.error('Error in deleteClass controller:', error);
+        logger.error('Failed to delete class', {
+            error: error.message,
+            cid,
+            class_name,
+            stack: error.stack
+        });
 
         if (error.code && error.message && typeof error.code === 'number') {
             return res.status(400).json({
@@ -151,10 +196,6 @@ export async function deleteClassController(req, res) {
             });
         }
 
-        // 未知错误
-        res.status(500).json({
-            ...ErrorCodes.SystemErrors.INTERNAL,
-            timestamp: Date.now()
-        });
+        handleControllerError(error, res);
     }
 }
