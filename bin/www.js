@@ -1,41 +1,70 @@
 #!/usr/bin/env node
-// /bin/www.js
+
+/**
+ * Module dependencies.
+ * Server initialization and configuration file
+ */
+
+// Node.js built-in modules
 import http from 'http';
 import process from 'process';
+
+// Third-party modules
 import chalk from 'chalk';
 
+// Local modules
 import app from '../app.js';
 import config from '../src/config/config.js';
 import logger from '../src/middleware/loggerMiddleware.js';
-import initializeDatabase from '../src/utils/db/db_init.js'; // ✅ 新建 db_initializer 负责初始化
+import initializeDatabase from '../src/utils/db/db_init.js';
 
-// Normalize port
+/**
+ * Get port from environment and store in Express.
+ */
 const port = normalizePort(config.app.port);
 app.set('port', port);
 
-// Create HTTP server
+/**
+ * Create HTTP server.
+ */
 const server = http.createServer(app);
 
-// Listen on provided port
+/**
+ * Listen on provided port, on all network interfaces.
+ */
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-// Normalize a port into a number, string, or false
+/**
+ * Normalize a port into a number, string, or false.
+ * @param {string|number} val - Port value to normalize
+ * @returns {number|string|boolean} Normalized port value
+ */
 function normalizePort(val) {
     const port = parseInt(val, 10);
-    if (isNaN(port)) return val;
-    if (port >= 0) return port;
+    
+    if (isNaN(port)) {
+        return val;
+    }
+    
+    if (port >= 0) {
+        return port;
+    }
+    
     return false;
 }
 
-// Event listener for HTTP server "error" event
+/**
+ * Event listener for HTTP server "error" event.
+ * @param {Error} error - Server error object
+ */
 function onError(error) {
-    if (error.syscall !== 'listen') throw error;
+    if (error.syscall !== 'listen') {
+        throw error;
+    }
 
-    const bind = typeof port === 'string'
-        ? 'Pipe ' + port
-        : 'Port ' + port;
+    const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
 
     // Handle specific listen errors with friendly messages
     switch (error.code) {
@@ -54,12 +83,13 @@ function onError(error) {
     }
 }
 
-// Event listener for HTTP server "listening" event
+/**
+ * Event listener for HTTP server "listening" event.
+ * Initializes database and logs server status
+ */
 async function onListening() {
     const addr = server.address();
-    const bind = typeof addr === 'string'
-        ? 'pipe ' + addr
-        : 'port ' + addr.port;
+    const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
 
     logger.info(chalk.green('================================='));
     logger.info(chalk.blue('🚀 Server Status'));
@@ -76,4 +106,6 @@ async function onListening() {
     }
 
     logger.info(chalk.green('=================================\n'));
+
+    logger.info('✅ System is up and running!');
 }
