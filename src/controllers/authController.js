@@ -1,45 +1,58 @@
-// src/controllers/authController.js
 import { authenticateUser } from "../services/auth.js";
 import logger from "../middleware/loggerMiddleware.js";
+import * as ErrorCodes from "../config/errorCodes.js";
 
+/**
+ * Handle user login
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 export async function login(req, res) {
-    try {
-        const { password } = req.body;
-        logger.debug("login", password);
+    const { password } = req.body;
+    const ip = req.ip;
+    
+    logger.debug('Login attempt initiated', JSON.stringify({ ip }));
 
+    try {
+        // Validate password
         if (!password) {
+            logger.warn('Login attempt without password', JSON.stringify({ ip }));
             return res.status(400).json({
-                code: 1001,
-                message: "Password is required",
-                data: null,
+                ...ErrorCodes.AuthErrors.PASSWORD_REQUIRED,
                 timestamp: Date.now()
             });
         }
 
-        const ip = req.ip; // Express 提供的请求 IP
+        // Authenticate user
+        logger.info('Attempting authentication', JSON.stringify({ ip }));
         const authResult = await authenticateUser(password, ip);
 
         if (!authResult) {
+            logger.warn('Authentication failed', JSON.stringify({ ip }));
             return res.status(401).json({
-                code: 1002,
-                message: "Invalid password",
-                data: null,
+                ...ErrorCodes.AuthErrors.LOGIN_FAILED,
                 timestamp: Date.now()
             });
         }
 
+        // Log successful login
+        logger.info('Login successful', JSON.stringify({ ip }));
         return res.json({
             code: 0,
-            message: "success",
+            message: "Login successful",
             data: authResult,
             timestamp: Date.now()
         });
+
     } catch (error) {
-        console.error("❌ Login error:", error);
+        logger.error('Login error occurred', {
+            error: error.message,
+            ip,
+            stack: error.stack
+        });
+
         return res.status(500).json({
-            code: 1000,
-            message: "Internal server error",
-            data: null,
+            ...ErrorCodes.SystemErrors.INTERNAL,
             timestamp: Date.now()
         });
     }

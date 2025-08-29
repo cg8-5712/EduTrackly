@@ -5,11 +5,11 @@
   "main": "app.js",
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "cross-env DEBUG=math_note:* nodemon ./bin/www",
+    "dev": "cross-env DEBUG=EduTrackly:* nodemon ./bin/www",
     "debug": "nodemon --inspect ./bin/www",
     "test": "jest",
     "lint": "eslint .",
-    "debuglog": "cross-env DEBUG=math-note:* node ./bin/www"
+    "debuglog": "cross-env DEBUG=EduTrackly:* node ./bin/www"
   },
   "dependencies": {
     "chalk": "^5.6.0",
@@ -30,5 +30,9 @@
     "url": "https://github.com/cg8-5712/EduTrackly"
   },
   "private": false,
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "cross-env": "^10.0.0",
+    "nodemon": "^3.1.10"
+  }
 }

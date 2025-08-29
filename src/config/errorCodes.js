@@ -3,6 +3,26 @@ export const AuthErrors = {
     INVALID_TOKEN: { code: 1001, message: "Invalid or expired token" },
     LOGIN_FAILED: { code: 1002, message: "Login failed" },
     UNAUTHORIZED: { code: 1003, message: "Unauthorized access" },
+    PASSWORD_REQUIRED: { 
+        code: 1004, 
+        message: "Password is required" 
+    },
+    INVALID_PASSWORD_FORMAT: { 
+        code: 1005, 
+        message: "Invalid password format" 
+    },
+    TOO_MANY_ATTEMPTS: { 
+        code: 1006, 
+        message: "Too many login attempts. Please try again later" 
+    },
+    IP_BLOCKED: { 
+        code: 1007, 
+        message: "Access blocked due to suspicious activity" 
+    },
+    SESSION_EXPIRED: { 
+        code: 1008, 
+        message: "Session has expired, please login again" 
+    }
 };
 
 export const HomeworkErrors = {
