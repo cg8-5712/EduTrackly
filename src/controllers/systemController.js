@@ -3,14 +3,9 @@ import logger from "../middleware/loggerMiddleware.js";
 
 export async function getSystemController(req, res) {
     try {
-        const sysInfo = await getSystemInfo();
-        return res.status(200).json({
-            code: 0,
-            message: "System info retrieved successfully",
-            data: sysInfo,
-            timestamp: Date.now()
-        });
-    } catch (error) {
+        const data = await getSystemInfo();
+        return res.status(200).json(data);
+    }  catch (error) {
         logger.error("Get system info error:", error);
 
         if (error.code && typeof error.code === "number") {
