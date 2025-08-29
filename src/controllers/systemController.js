@@ -1,24 +1,36 @@
 import { getSystemInfo } from "../services/system.js";
 import logger from "../middleware/loggerMiddleware.js";
+import { handleControllerError } from "../utils/errorHandler.js";
 
 export async function getSystemController(req, res) {
     try {
+        logger.info("System info request received", {
+            ip: req.ip,
+            method: req.method,
+            path: req.originalUrl
+        });
+
+        logger.debug("Fetching system info from service...");
         const data = await getSystemInfo();
-        return res.status(200).json(data);
-    }  catch (error) {
-        logger.error("Get system info error:", error);
 
-        if (error.code && typeof error.code === "number") {
-            return res.status(400).json({
-                ...error,
-                timestamp: Date.now()
-            });
-        }
+        logger.info("System info retrieved successfully", {
+            cpuCount: data.cpu?.length,
+            memory: data.memory,
+        });
 
-        return res.status(500).json({
-            code: 9001,
-            message: "Internal server error",
+        return res.status(200).json({
+            code: 0,
+            message: "System info retrieved successfully",
+            data,
             timestamp: Date.now()
         });
+    } catch (error) {
+        logger.error("Failed to get system info", {
+            error: error.message,
+            stack: error.stack,
+            ip: req.ip
+        });
+
+        handleControllerError(error, res);
     }
 }
