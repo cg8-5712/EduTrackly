@@ -75,6 +75,8 @@ export const ParamsErrors = {
     INVALID_EVENT_TYPE_FOR_PERMANENT_ABSENT_STUDENT: {code: 7014, message: "Invalid event type for permanent absent student"},
     INVALID_PAGE_NUMBER: { code: 7015, message: "Invalid page number" },
     INVALID_PAGE_SIZE: { code: 7016, message: "Invalid page size" },
-    INVALID_SORT_ORDER: { code: 7017, message: "Sort order must be 'asc' or 'desc'" }
-
+    INVALID_SORT_ORDER: { code: 7017, message: "Sort order must be 'asc' or 'desc'" },
+    REQUIRE_STUDENTS_ARRAY: { code: 7018, message: "Students array is required" },
+    REQUIRE_EVENTS_ARRAY: { code: 7019, message: "Events array is required" },
+    REQUIRE_VALID_ATTENDANCE: { code: 7020, message: "Attendance must be true/false" }
 }
