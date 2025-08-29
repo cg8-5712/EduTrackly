@@ -81,6 +81,13 @@ export async function getTodayAnalysis(cid, date) {
 }
 
 export async function getClassAnalysis(cid) {
+
+    const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
+    if (studentRes.rows.length === 0) {
+        logger.warn(`CID ${cid} does not exist in class table`);
+        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+    }
+
     const sql = `
     WITH class_info AS (
       SELECT c.cid, c.class_name

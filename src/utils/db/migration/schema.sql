@@ -66,8 +66,8 @@ IF NEW.event_type = 'temp' AND student_attendance = true THEN
         RAISE EXCEPTION 'Student with sid % has attendance=true, cannot assign temp', NEW.sid;
 END IF;
 
-IF NEW.event_type = 'sick' OR NEW.event_type = 'personal' OR NEW.event_type = 'official' AND student_attendance = false THEN
-        RAISE EXCEPTION 'Student with sid % has attendance=false, cannot assign official/personal/sick', NEW.sid;
+IF (NEW.event_type IN ('sick','personal','official')) AND student_attendance = false THEN
+    RAISE EXCEPTION 'Student with sid % has attendance=false, cannot assign official/personal/sick', NEW.sid;
 END IF;
 
 RETURN NEW;
