@@ -18,12 +18,16 @@ export async function getTodayAnalysis(cid) {
                 WHERE c.cid = $1
             ),
                  expected AS (
-                     SELECT COUNT(*) AS expected_attend
+                     SELECT COUNT(*)::int AS expected_attend
                      FROM student s
                      WHERE s.cid = $1
                  ),
-                 actual AS (
-                     SELECT COUNT(DISTINCT a.sid) AS actual_attend
+                 event_counts AS (
+                     SELECT
+                         COUNT(*) FILTER (WHERE a.event_type = 'official')::int AS official_cnt,
+                         COUNT(*) FILTER (WHERE a.event_type = 'personal')::int AS personal_cnt,
+                         COUNT(*) FILTER (WHERE a.event_type = 'sick')::int AS sick_cnt,
+                         COUNT(*) FILTER (WHERE a.event_type = 'temp')::int AS temp_cnt
                      FROM attendance a
                               JOIN student s ON a.sid = s.sid
                      WHERE s.cid = $1
@@ -36,24 +40,34 @@ export async function getTodayAnalysis(cid) {
                      WHERE s.cid = $1
                        AND a.event_date = CURRENT_DATE
                  )
-            SELECT ci.cid,
-                   ci.class_name,
-                   e.expected_attend,
-                   COALESCE(a.actual_attend, 0) AS actual_attend,
-                   COALESCE(
-                           JSON_AGG(
-                                   JSON_BUILD_OBJECT(
-                                           'student_name', ev.student_name,
-                                           'event_type', ev.event_type
-                                   )
-                           ) FILTER (WHERE ev.student_name IS NOT NULL),
-                           '[]'
-                   ) AS event_list
+            SELECT
+                ci.cid,
+                ci.class_name,
+                e.expected_attend,
+                GREATEST(
+                        e.expected_attend
+                            - (ec.official_cnt + ec.personal_cnt + ec.sick_cnt)
+                            + ec.temp_cnt,
+                        0
+                ) AS actual_attend,
+                ec.official_cnt,
+                ec.personal_cnt,
+                ec.sick_cnt,
+                ec.temp_cnt,
+                COALESCE(
+                        JSON_AGG(
+                                JSON_BUILD_OBJECT(
+                                        'student_name', ev.student_name,
+                                        'event_type', ev.event_type
+                                )
+                        ) FILTER (WHERE ev.student_name IS NOT NULL),
+                        '[]'
+                ) AS event_list
             FROM class_info ci
                      CROSS JOIN expected e
-                     CROSS JOIN actual a
+                     CROSS JOIN event_counts ec
                      LEFT JOIN events ev ON true
-            GROUP BY ci.cid, ci.class_name, e.expected_attend, a.actual_attend;
+            GROUP BY ci.cid, ci.class_name, e.expected_attend, ec.official_cnt, ec.personal_cnt, ec.sick_cnt, ec.temp_cnt;
         `,
         [cid]
     );
