@@ -6,7 +6,7 @@ import { formatDatefromyyyymmddtopsqldate, formatDatefromsqldatetoyyyymmdd } fro
 /**
  * 根据班级和日期获取作业
  */
-export async function getHomeworkByCidAndDate(cid, date) {
+export async function getHomework(cid, date) {
     const sqlDate = formatDatefromyyyymmddtopsqldate(date);
     logger.debug(`Getting homework for class ${cid} on ${sqlDate}`);
 
@@ -105,7 +105,7 @@ export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 
 /**
  * 创建或更新作业
  */
-export async function createOrUpdateHomework({ cid, homework_content, due_date }) {
+export async function createHomework({ cid, homework_content, due_date }) {
     const sqlDate = formatDatefromyyyymmddtopsqldate(due_date.toString());
 
     // 检查班级是否存在

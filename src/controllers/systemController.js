@@ -1,6 +1,6 @@
 import { getSystemInfo } from "../services/system.js";
 import logger from "../middleware/loggerMiddleware.js";
-import { handleControllerError } from "../utils/errorHandler.js";
+import { handleControllerError } from "../middleware/error_handler.js";
 
 export async function getSystemController(req, res) {
     try {
