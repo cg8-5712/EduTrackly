@@ -33,7 +33,7 @@ export async function getHomework(req, res) {
         }
 
         logger.info('Fetching homework', { cid, date });
-        const result = await homeworkService.getHomeworkByCidAndDate(cid, date);
+        const result = await homeworkService.getHomework(cid, date);
 
         if (!result) {
             logger.warn('No homework found', { cid, date });
@@ -147,7 +147,7 @@ export async function listHomeworks(req, res) {
  */
 export async function createHomework(req, res) {
     try {
-        const { cid, homework_content, due_date } = req.body;
+        let { cid, homework_content, due_date } = req.body;
         logger.debug('Received createHomework request', { cid, due_date });
 
         // 参数校验
@@ -168,11 +168,7 @@ export async function createHomework(req, res) {
         }
 
         if (!due_date) {
-            logger.warn('Missing required parameter: due date');
-            return res.status(400).json({
-                ...ErrorCodes.ParamsErrors.REQUIRE_DATE,
-                timestamp: Date.now()
-            });
+            due_date = moment().format('YYYYMMDD');
         }
 
         // 日期格式校验
@@ -186,7 +182,7 @@ export async function createHomework(req, res) {
         }
 
         logger.info('Creating or updating homework', { cid, due_date });
-        await homeworkService.createOrUpdateHomework({ cid, homework_content, due_date });
+        await homeworkService.createHomework({ cid, homework_content, due_date });
 
         logger.info('Homework created or updated successfully', { cid, due_date });
         res.json({
