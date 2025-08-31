@@ -8,7 +8,7 @@ import logger from '../middleware/loggerMiddleware.js';
  */
 export function handleControllerError(error, res) {
     if (error.code && error.message && typeof error.code === 'number') {
-        return res.status(400).json({
+        return res.status(200).json({
             ...error,
             timestamp: Date.now()
         });
