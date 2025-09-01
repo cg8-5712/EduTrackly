@@ -152,26 +152,14 @@ export async function changeAttendance(sid, attendance) {
  * @param {number} sid 学生ID
  * @returns {Promise<boolean>} 是否删除成功
  */
-export async function deleteStudent(sid) {
-    const result = await db.query(
-        `DELETE FROM student WHERE sid = $1 RETURNING sid`,
-        [sid]
-    );
-
-    if (result.rowCount === 0) {
-        throw StudentErrors.NOT_FOUND; // 学生不存在
-    }
-
-    return true;
-}
-
 export async function putStudentEvents(events) {
     if (!Array.isArray(events) || events.length === 0) {
         throw ErrorCodes.ParamsErrors.REQUIRE_BODY;
     }
 
-    const values = [];
-    const params = [];
+    const insertValues = [];
+    const insertParams = [];
+    const deleteSids = [];
 
     events.forEach((event, i) => {
         if (!event.sid) {
@@ -179,7 +167,9 @@ export async function putStudentEvents(events) {
         }
 
         if (!event.event_type) {
-            throw ParamsErrors.REQUIRE_EVENT_TYPE;
+            // 如果 event_type 为空，记录需要删除的 sid
+            deleteSids.push(event.sid);
+            return;
         }
 
         const allowed = ["official", "personal", "sick", "temp"];
@@ -187,21 +177,33 @@ export async function putStudentEvents(events) {
             throw ParamsErrors.ILLEGAL_EVENT_TYPE;
         }
 
-        params.push(event.sid, event.event_type);
-        const offset = i * 2;
-        values.push(`($${offset + 1}, CURRENT_DATE, $${offset + 2})`);
+        insertParams.push(event.sid, event.event_type);
+        const offset = insertParams.length - 1; // 每个 event 占两个参数
+        insertValues.push(`($${offset}, CURRENT_DATE, $${offset + 1})`);
     });
 
-    const query = `
-        INSERT INTO attendance (sid, event_date, event_type)
-        VALUES ${values.join(", ")}
-        ON CONFLICT (sid, event_date)
-        DO UPDATE SET event_type = EXCLUDED.event_type
-    `;
+    // 先删除指定 sid 的今日记录
+    if (deleteSids.length > 0) {
+        const deleteQuery = `
+            DELETE FROM attendance
+            WHERE event_date = CURRENT_DATE
+              AND sid = ANY($1)
+        `;
+        await db.query(deleteQuery, [deleteSids]);
+        logger.debug(`Deleted today's attendance for SIDs: ${deleteSids}`);
+    }
 
-    logger.debug(`putStudentEvents: ${query} with params ${params}`);
-
-    await db.query(query, params);
+    // 插入或更新
+    if (insertValues.length > 0) {
+        const insertQuery = `
+            INSERT INTO attendance (sid, event_date, event_type)
+            VALUES ${insertValues.join(", ")}
+            ON CONFLICT (sid, event_date)
+            DO UPDATE SET event_type = EXCLUDED.event_type
+        `;
+        logger.debug(`Inserting/updating attendance: ${insertQuery} with params ${insertParams}`);
+        await db.query(insertQuery, insertParams);
+    }
 
     return {
         code: 0,
