@@ -22,7 +22,9 @@ export async function getTodayAnalysis(cid, date) {
                      SELECT COUNT(*)::int AS expected_attend
                      FROM student s
                      WHERE s.cid = $1
+                       AND s.attendance = true
                  ),
+
                  event_counts AS (
                      SELECT
                          COUNT(*) FILTER (WHERE a.event_type = 'official')::int AS official_cnt,
