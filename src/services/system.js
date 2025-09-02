@@ -44,12 +44,17 @@ export async function getSystemInfo() {
         });
     }
 
-    return {
-        code: 0,
-        message: 'System info retrieved successfully',
-        data: { cpu: cpus, memory, load, disk, network },
-        timestamp: Date.now()
+    // 获取操作系统相关信息
+    const osInfo = {
+        type: os.type(), // 操作系统类型，如 'Linux', 'Darwin', 'Windows_NT'
+        platform: os.platform(), // 操作系统平台，如 'linux', 'win32'
+        release: os.release(), // 操作系统发布版本
+        arch: os.arch(), // 操作系统架构，如 'x64', 'arm64'
+        uptime: os.uptime(), // 系统启动以来的时间（单位：秒）
+        hostname: os.hostname(), // 主机名
     };
+
+    return { cpu: cpus, memory, load, disk, network, os: osInfo };
 }
 
 // ===================== CPU Usage =====================
