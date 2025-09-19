@@ -21,10 +21,20 @@ CREATE TABLE admin (
 -- ================= Homework Table =================
 CREATE TABLE homework (
                           cid INT NOT NULL,
-                          description TEXT NOT NULL,
+                          chinese TEXT,
+                          math TEXT,
+                          english TEXT,
+                          physics TEXT,
+                          chemistry TEXT,
+                          biology TEXT,
+                          history TEXT,
+                          geography TEXT,
+                          politics TEXT,
+                          other TEXT,
                           due_date DATE NOT NULL,
                           CONSTRAINT uq_homework_cid_due_date UNIQUE (cid, due_date)
 );
+
 
 -- ================= Student Table =================
 CREATE TABLE student (

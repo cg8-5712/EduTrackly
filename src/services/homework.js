@@ -19,7 +19,8 @@ export async function getHomework(cid, date) {
 
     // 查询作业
     const homeworkRes = await db.query(
-        `SELECT cid, description AS homework_content, due_date FROM homework WHERE cid = $1 AND due_date = $2 LIMIT 1`,
+        `SELECT cid, chinese, math, english, physics, chemistry, biology, history, geography, politics, other, due_date 
+         FROM homework WHERE cid = $1 AND due_date = $2 LIMIT 1`,
         [cid, sqlDate]
     );
     if (homeworkRes.rows.length === 0) {
@@ -27,15 +28,35 @@ export async function getHomework(cid, date) {
     }
 
     const homework = homeworkRes.rows[0];
-    homework.due_date = formatDatefromsqldatetoyyyymmdd(homework.due_date);
+
+    // 构造 homework_content 对象
+    const homework_content = {
+        chinese: homework.chinese || "",
+        maths: homework.math || "",  // 注意这里用 maths 而不是 math
+        english: homework.english || "",
+        physics: homework.physics || "",
+        chemistry: homework.chemistry || "",
+        biology: homework.biology || "",
+        history: homework.history || "",
+        geography: homework.geography || "",
+        politics: homework.politics || "",
+        others: homework.other || ""  // 注意这里用 others 而不是 other
+    };
 
     // 查询班级名称
     const classQuery = `SELECT class_name FROM class WHERE cid = $1 LIMIT 1`;
     const classRes2 = await db.query(classQuery, [cid]);
-    homework.class_name = classRes2.rows.length > 0 ? classRes2.rows[0].class_name : null;
+    const class_name = classRes2.rows.length > 0 ? classRes2.rows[0].class_name : null;
 
-    logger.info(`Homework found: ${JSON.stringify(homework)}`);
-    return homework;
+    const result = {
+        cid: homework.cid,
+        class_name,
+        homework_content,
+        due_date: formatDatefromsqldatetoyyyymmdd(homework.due_date)
+    };
+
+    logger.info(`Homework found: ${JSON.stringify(result)}`);
+    return result;
 }
 
 /**
@@ -77,10 +98,11 @@ export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 
     const orderClause = order === 'incs' ? 'ASC' : 'DESC';
 
     const query = `
-        SELECT h.cid, c.class_name, h.description AS homework_content, h.due_date
+        SELECT h.cid, c.class_name, h.chinese, h.math, h.english, h.physics, h.chemistry, 
+               h.biology, h.history, h.geography, h.politics, h.other, h.due_date
         FROM homework h
-        LEFT JOIN class c ON h.cid = c.cid
-        ${whereClause}
+                 LEFT JOIN class c ON h.cid = c.cid
+            ${whereClause}
         ORDER BY h.due_date ${orderClause}
         LIMIT $${params.length - 1} OFFSET $${params.length}
     `;
@@ -88,7 +110,20 @@ export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 
     const result = await db.query(query, params);
 
     const data = result.rows.map(r => ({
-        ...r,
+        cid: r.cid,
+        class_name: r.class_name,
+        homework_content: {
+            chinese: r.chinese || "",
+            maths: r.math || "",
+            english: r.english || "",
+            physics: r.physics || "",
+            chemistry: r.chemistry || "",
+            biology: r.biology || "",
+            history: r.history || "",
+            geography: r.geography || "",
+            politics: r.politics || "",
+            others: r.other || ""
+        },
         due_date: formatDatefromsqldatetoyyyymmdd(r.due_date)
     }));
 
@@ -115,12 +150,37 @@ export async function createHomework({ cid, homework_content, due_date }) {
         throw ClassErrors.NOT_FOUND;
     }
 
+    // 从 homework_content 对象中提取各科目内容
+    const {
+        chinese = null,
+        maths = null,  // 注意这里接收 maths
+        english = null,
+        physics = null,
+        chemistry = null,
+        biology = null,
+        history = null,
+        geography = null,
+        politics = null,
+        others = null  // 注意这里接收 others
+    } = homework_content;
+
     await db.query(`
-        INSERT INTO homework (cid, description, due_date)
-        VALUES ($1, $2, $3)
+        INSERT INTO homework (cid, chinese, math, english, physics, chemistry, biology, history, geography, politics, other, due_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         ON CONFLICT (cid, due_date)
-        DO UPDATE SET description = EXCLUDED.description
-    `, [cid, homework_content, sqlDate]);
+            DO UPDATE SET 
+                chinese = EXCLUDED.chinese,
+                math = EXCLUDED.math,
+                english = EXCLUDED.english,
+                physics = EXCLUDED.physics,
+                chemistry = EXCLUDED.chemistry,
+                biology = EXCLUDED.biology,
+                history = EXCLUDED.history,
+                geography = EXCLUDED.geography,
+                politics = EXCLUDED.politics,
+                other = EXCLUDED.other
+    `, [cid, chinese, maths, english, physics, chemistry, biology, history, geography, politics, others, sqlDate]);
+    // 注意这里存储时 maths -> math, others -> other
 
     logger.info(`Homework for class ${cid} on ${sqlDate} created/updated successfully`);
     return { cid, due_date: sqlDate, homework_content };

@@ -23,7 +23,7 @@ export async function getHomework(req, res) {
         }
 
         date = date || moment().format('YYYYMMDD');
-        
+
         if (!moment(date, 'YYYYMMDD', true).isValid()) {
             logger.warn('Invalid date format provided', { date });
             return res.status(400).json({
@@ -43,10 +43,10 @@ export async function getHomework(req, res) {
             });
         }
 
-        logger.debug('Homework retrieved successfully', { 
-            cid, 
+        logger.debug('Homework retrieved successfully', {
+            cid,
             date,
-            homework_id: result.id 
+            homework_id: result.id
         });
 
         return res.json({
@@ -63,7 +63,7 @@ export async function getHomework(req, res) {
             date,
             stack: error.stack
         });
-        
+
         handleControllerError(error, res);
     }
 }
@@ -137,7 +137,7 @@ export async function listHomeworks(req, res) {
             endDate,
             stack: error.stack
         });
-        
+
         handleControllerError(error, res);
     }
 }
@@ -159,8 +159,8 @@ export async function createHomework(req, res) {
             });
         }
 
-        if (!homework_content) {
-            logger.warn('Missing required parameter: homework content');
+        if (!homework_content || typeof homework_content !== 'object') {
+            logger.warn('Missing or invalid homework content');
             return res.status(400).json({
                 ...ErrorCodes.ParamsErrors.REQUIRE_HOMEWORK_CONTENT,
                 timestamp: Date.now()
