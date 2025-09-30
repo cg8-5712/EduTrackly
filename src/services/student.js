@@ -6,17 +6,12 @@ import * as pagination from "../utils/pagination.js";
 
 /**
  * 添加学生
- * @param {number} cid 班级ID，必填
- * @param {string[]} students 学生名字数组
+ * @param {Array} students 学生数组，每个学生对象包含 cid, student_name, attendance
  */
 
-export async function addStudents(cid, students) {
-    if (!cid) {
-        logger.error('addStudents: cid is required');
-        throw ParamsErrors.REQUIRE_CID;
-    }
+export async function addStudents(students) {
     if (!Array.isArray(students) || students.length === 0) {
-        throw ParamsErrors.REQUIRE_STUDENT_NAME;
+        throw ParamsErrors.REQUIRE_STUDENTS_ARRAY;
     }
 
     const query = `
@@ -27,13 +22,18 @@ export async function addStudents(cid, students) {
 
     const results = [];
     for (const stu of students) {
+        if (!stu.cid) {
+            logger.error('addStudents: cid is required for each student');
+            throw ParamsErrors.REQUIRE_CID;
+        }
+
         if (!stu.student_name) {
             throw ParamsErrors.REQUIRE_STUDENT_NAME;
         }
 
         const attendance = stu.attendance === undefined ? true : stu.attendance;
 
-        const res = await db.query(query, [cid, stu.student_name, attendance]);
+        const res = await db.query(query, [stu.cid, stu.student_name, attendance]);
         results.push(res.rows[0]);
     }
     return results;

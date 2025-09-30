@@ -24,6 +24,8 @@ class DatabaseConnector {
         try {
             this.pool = new Pool(this.config);
 
+            logger.debug('数据库连接信息: ', JSON.stringify(this.config, null, 2));
+
             // 测试连接
             const client = await this.pool.connect();
             client.release();

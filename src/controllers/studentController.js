@@ -9,18 +9,9 @@ import { handleControllerError } from '../middleware/error_handler.js';
  */
 export async function addStudentsController(req, res) {
     try {
-        const { cid } = req.query;
         const students = req.body;
 
-        logger.debug('Received addStudents request', { cid, studentCount: students?.length });
-
-        if (!cid) {
-            logger.warn('Missing required parameter: class id');
-            return res.status(400).json({
-                ...ErrorCodes.ParamsErrors.REQUIRE_CID,
-                timestamp: Date.now()
-            });
-        }
+        logger.debug('Received addStudents request', { studentCount: students?.length });
 
         if (!students || !Array.isArray(students)) {
             logger.warn('Invalid or missing students array in request body');
@@ -30,8 +21,8 @@ export async function addStudentsController(req, res) {
             });
         }
 
-        await studentService.addStudents(cid, students);
-        logger.info('Students added successfully', { cid, addedCount: students.length });
+        await studentService.addStudents(students);
+        logger.info('Students added successfully', { addedCount: students.length });
 
         return res.status(200).json({
             code: 0,
