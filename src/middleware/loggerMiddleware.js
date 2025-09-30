@@ -48,7 +48,20 @@ class Logger {
         const timestamp = chalk.gray(this.formatTime());
         const paddedLevel = `[${level.toUpperCase().padEnd(5)}]`;
         const levelTag = color(paddedLevel);
-        let message = `${timestamp} | ${levelTag} | ${args.join(" ")}`;
+
+        // 格式化参数，将对象转换为 JSON 字符串
+        const formattedArgs = args.map(arg => {
+            if (typeof arg === 'object' && arg !== null) {
+                try {
+                    return JSON.stringify(arg);
+                } catch (e) {
+                    return String(arg);
+                }
+            }
+            return String(arg);
+        });
+
+        let message = `${timestamp} | ${levelTag} | ${formattedArgs.join(" ")}`;
         if (level === "error" && this.level === "debug") {
             const caller = chalk.cyan(getCallerInfo());
             message += ` | ${caller}`;
