@@ -83,12 +83,57 @@ export async function getTodayAnalysis(cid, date) {
     };
 }
 
-export async function getClassAnalysis(cid) {
+export async function getClassAnalysis(cid, startDate, endDate) {
 
     const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (studentRes.rows.length === 0) {
         logger.warn(`CID ${cid} does not exist in class table`);
         throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+    }
+
+    // 日期规则处理
+    let actualStartDate = startDate;
+    let actualEndDate = endDate;
+
+    // 如果只传入 endDate，则无效，忽略
+    if (!startDate && endDate) {
+        actualStartDate = null;
+        actualEndDate = null;
+    }
+
+    // 如果没有传入任何日期，默认使用近15天
+    if (!actualStartDate && !actualEndDate) {
+        actualEndDate = formatDatefromyyyymmddtopsqldate(
+            new Date().toISOString().split('T')[0].replace(/-/g, '')
+        );
+        const fifteenDaysAgo = new Date();
+        fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+        actualStartDate = formatDatefromyyyymmddtopsqldate(
+            fifteenDaysAgo.toISOString().split('T')[0].replace(/-/g, '')
+        );
+    }
+
+    // 如果只传入 startDate，endDate 默认为当前日期
+    if (actualStartDate && !actualEndDate) {
+        actualEndDate = formatDatefromyyyymmddtopsqldate(
+            new Date().toISOString().split('T')[0].replace(/-/g, '')
+        );
+    }
+
+    const params = [cid];
+    let dateRangeQuery = '';
+
+    if (actualStartDate && actualEndDate) {
+        params.push(actualStartDate, actualEndDate);
+        dateRangeQuery = `
+        date_range AS (
+          SELECT generate_series($2::date, $3::date, '1 day'::interval)::date AS event_date
+        ),`;
+    } else {
+        dateRangeQuery = `
+        date_range AS (
+          SELECT NULL::date AS event_date WHERE false
+        ),`;
     }
 
     const sql = `
@@ -98,68 +143,64 @@ export async function getClassAnalysis(cid) {
       WHERE c.cid = $1
     ),
     student_info AS (
-      SELECT s.sid, s.student_name, s.cid, s.attendance
+      SELECT COUNT(*)::int AS student_num,
+             COUNT(*) FILTER (WHERE attendance = true)::int AS expected_attend
       FROM student s
       WHERE s.cid = $1
     ),
-    -- 今天的考勤
-    today_attendance AS (
-      SELECT a.sid, a.event_type
+    ${dateRangeQuery}
+    -- 计算每天的出勤情况
+    daily_attendance AS (
+      SELECT
+        a.event_date,
+        COUNT(*) FILTER (WHERE a.event_type IN ('official', 'personal', 'sick'))::int AS absent_cnt,
+        COUNT(*) FILTER (WHERE a.event_type = 'temp')::int AS temp_cnt
       FROM attendance a
-      WHERE a.event_date = CURRENT_DATE
-    ),
-    -- 今日正常到课学生（在 student.attendance = true 且今天没有请假记录）
-    today_attend AS (
-      SELECT s.sid, s.student_name
-      FROM student_info s
-      WHERE s.attendance = true
-        AND NOT EXISTS (
-          SELECT 1 FROM today_attendance t
-          WHERE t.sid = s.sid
-            AND t.event_type IN ('official','personal','sick')
-        )
-    ),
-    -- 今日缺席学生（有 official/personal/sick 记录）
-    today_absent AS (
-      SELECT s.sid, s.student_name, t.event_type
-      FROM student_info s
-      JOIN today_attendance t ON s.sid = t.sid
-      WHERE t.event_type IN ('official','personal','sick')
-    ),
-    -- 今日临时到课学生（temp）
-    today_temp AS (
-      SELECT s.sid, s.student_name
-      FROM student_info s
-      JOIN today_attendance t ON s.sid = t.sid
-      WHERE t.event_type = 'temp'
+      JOIN student s ON a.sid = s.sid
+      WHERE s.cid = $1
+      GROUP BY a.event_date
     )
-    SELECT 
+    SELECT
       ci.cid,
       ci.class_name,
-      -- 班级总人数
-      (SELECT COUNT(*)::int FROM student_info) AS student_num,
-      -- 应到人数：student.attendance = true
-      (SELECT COUNT(*)::int FROM student_info WHERE attendance = true) AS expected_attend,
-      -- 所有登记出勤的学生（含 attendance=true）
-      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name)), '[]')
-       FROM student_info WHERE attendance = true) AS attend_student,
-      -- 所有登记不出勤的学生（attendance=false）
-      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name)), '[]')
-       FROM student_info WHERE attendance = false) AS absent_student,
-      -- 今日实际到课
-      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name)), '[]')
-       FROM today_attend) AS today_attend,
-      -- 今日缺席
-      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name, 'event_type', event_type)), '[]')
-       FROM today_absent) AS today_absent,
-      -- 今日临时
-      (SELECT COALESCE(json_agg(json_build_object('sid', sid, 'student_name', student_name)), '[]')
-       FROM today_temp) AS today_temp
+      si.expected_attend,
+      si.student_num,
+      COALESCE(
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'date', dr.event_date,
+            'attendance_rate', ROUND(
+              (CASE
+                WHEN si.expected_attend > 0
+                THEN ((si.expected_attend - COALESCE(da.absent_cnt, 0) + COALESCE(da.temp_cnt, 0))::float / si.expected_attend * 100)
+                ELSE 0
+              END)::numeric,
+              2
+            )
+          )
+          ORDER BY dr.event_date
+        ) FILTER (WHERE dr.event_date IS NOT NULL),
+        '[]'
+      ) AS daily_attendance_rates
     FROM class_info ci
+    CROSS JOIN student_info si
+    CROSS JOIN date_range dr
+    LEFT JOIN daily_attendance da ON dr.event_date = da.event_date
+    GROUP BY ci.cid, ci.class_name, si.expected_attend, si.student_num
   `;
 
-    const result = await db.query(sql, [cid]);
-    return result.rows[0];
+    const result = await db.query(sql, params);
+    const row = result.rows[0];
+
+    // 格式化日期为 YYYYMMDD
+    if (row.daily_attendance_rates && row.daily_attendance_rates.length > 0) {
+        row.daily_attendance_rates = row.daily_attendance_rates.map(item => ({
+            date: formatDatefromsqldatetoyyyymmdd(item.date),
+            attendance_rate: parseFloat(item.attendance_rate)
+        }));
+    }
+
+    return row;
 }
 
 /**
@@ -167,6 +208,10 @@ export async function getClassAnalysis(cid) {
  * @param {number} cid 班级ID，可选
  * @param {string|number} startDate 起始日期 YYYYMMDD，可选
  * @param {string|number} endDate 截止日期 YYYYMMDD，可选
+ * 规则：
+ * - 只传入 endDate 无效，将被忽略
+ * - 只传入 startDate，数据从 startDate 到当前日期
+ * - 两者都传入，使用指定范围
  */
 export async function getStudentsAnalysis({ cid, startDate, endDate }) {
     const params = [];
@@ -186,14 +231,31 @@ export async function getStudentsAnalysis({ cid, startDate, endDate }) {
         params.push(parseInt(cid, 10));
     }
 
-    if (startDate !== undefined && startDate !== null && startDate !== "") {
-        whereClause += ` AND a.event_date >= $${idx++}`;
-        params.push(startDate);
+    // 应用日期规则
+    let actualStartDate = startDate;
+    let actualEndDate = endDate;
+
+    // 如果只传入 endDate，则无效，忽略
+    if (!startDate && endDate) {
+        actualStartDate = null;
+        actualEndDate = null;
     }
 
-    if (endDate !== undefined && endDate !== null && endDate !== "") {
+    // 如果只传入 startDate，endDate 默认为当前日期
+    if (actualStartDate && !actualEndDate) {
+        actualEndDate = formatDatefromyyyymmddtopsqldate(
+            new Date().toISOString().split('T')[0].replace(/-/g, '')
+        );
+    }
+
+    if (actualStartDate !== undefined && actualStartDate !== null && actualStartDate !== "") {
+        whereClause += ` AND a.event_date >= $${idx++}`;
+        params.push(actualStartDate);
+    }
+
+    if (actualEndDate !== undefined && actualEndDate !== null && actualEndDate !== "") {
         whereClause += ` AND a.event_date <= $${idx++}`;
-        params.push(endDate);
+        params.push(actualEndDate);
     }
 
     const query = `

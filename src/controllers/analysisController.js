@@ -49,8 +49,8 @@ export async function getToday(req, res) {
  * @param {Object} res - Express response object
  */
 export async function getClassAnalysisController(req, res) {
-    const { cid } = req.query;
-    logger.debug('Class analysis requested', { cid });
+    let { cid, startDate, endDate } = req.query;
+    logger.debug('Class analysis requested', { cid, startDate, endDate });
 
     try {
         if (!cid) {
@@ -61,7 +61,15 @@ export async function getClassAnalysisController(req, res) {
             });
         }
 
-        const data = await getClassAnalysis(cid);
+        // 日期格式转换
+        if (startDate) {
+            startDate = formatDatefromyyyymmddtopsqldate(startDate);
+        }
+        if (endDate) {
+            endDate = formatDatefromyyyymmddtopsqldate(endDate);
+        }
+
+        const data = await getClassAnalysis(cid, startDate, endDate);
         if (!data) {
             logger.warn(`No data found for class ${cid}`);
             return res.status(404).json({
@@ -98,13 +106,13 @@ export async function getStudentsAnalysisController(req, res) {
     logger.debug('Students analysis requested', { cid, startDate, endDate });
 
     try {
+        // 日期格式转换
         if (startDate) {
             startDate = formatDatefromyyyymmddtopsqldate(startDate);
         }
-
-        endDate = endDate 
-            ? formatDatefromyyyymmddtopsqldate(endDate)
-            : formatDatefromyyyymmddtopsqldate(moment().format('YYYYMMDD'));
+        if (endDate) {
+            endDate = formatDatefromyyyymmddtopsqldate(endDate);
+        }
 
         logger.info('Fetching students analysis', { cid, startDate, endDate });
         const students = await getStudentsAnalysis({ cid, startDate, endDate });
