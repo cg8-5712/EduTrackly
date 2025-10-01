@@ -27,6 +27,13 @@ export async function addStudents(students) {
             throw ParamsErrors.REQUIRE_CID;
         }
 
+        // 检查班级是否存在
+        const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [stu.cid]);
+        if (classRes.rows.length === 0) {
+            logger.warn(`CID ${stu.cid} does not exist`);
+            throw ClassErrors.NOT_FOUND;
+        }
+
         if (!stu.student_name) {
             throw ParamsErrors.REQUIRE_STUDENT_NAME;
         }
@@ -104,6 +111,13 @@ export async function listStudents({ cid, page, size }) {
     const params = [];
 
     if (cid) {
+        // 检查班级是否存在
+        const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
+        if (classRes.rows.length === 0) {
+            logger.warn(`CID ${cid} does not exist`);
+            throw ClassErrors.NOT_FOUND;
+        }
+
         whereClause = "WHERE cid = $1";
         params.push(cid);
     }

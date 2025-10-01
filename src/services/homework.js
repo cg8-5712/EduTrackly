@@ -77,6 +77,13 @@ export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 
     const params = [];
 
     if (cid) {
+        // 检查班级是否存在
+        const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
+        if (classRes.rows.length === 0) {
+            logger.warn(`CID ${cid} does not exist`);
+            throw ClassErrors.NOT_FOUND;
+        }
+
         params.push(cid);
         conditions.push(`h.cid = $${params.length}`);
     }
@@ -190,6 +197,13 @@ export async function createHomework({ cid, homework_content, due_date }) {
  * 删除作业
  */
 export async function deleteHomework(cid, date) {
+    // 检查班级是否存在
+    const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
+    if (classRes.rows.length === 0) {
+        logger.warn(`CID ${cid} does not exist`);
+        throw ClassErrors.NOT_FOUND;
+    }
+
     const sqlDate = formatDatefromyyyymmddtopsqldate(date);
     const result = await db.query(
         `DELETE FROM homework WHERE cid = $1 AND due_date = $2 RETURNING *`,

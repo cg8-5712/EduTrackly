@@ -175,6 +175,13 @@ export async function getStudentsAnalysis({ cid, startDate, endDate }) {
     let whereClause = "WHERE 1=1";
 
     if (cid !== undefined && cid !== null && cid !== "") {
+        // 检查班级是否存在
+        const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
+        if (classRes.rows.length === 0) {
+            logger.warn(`CID ${cid} does not exist`);
+            throw ClassErrors.NOT_FOUND;
+        }
+
         whereClause += ` AND s.cid = $${idx++}`;
         params.push(parseInt(cid, 10));
     }
