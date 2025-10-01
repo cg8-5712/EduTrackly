@@ -148,6 +148,16 @@ export async function getClassAnalysis(cid, startDate, endDate) {
       FROM student s
       WHERE s.cid = $1
     ),
+    -- 今天的出勤情况
+    today_attendance AS (
+      SELECT
+        COUNT(*) FILTER (WHERE a.event_type IN ('official', 'personal', 'sick'))::int AS today_absent_cnt,
+        COUNT(*) FILTER (WHERE a.event_type = 'temp')::int AS today_temp_cnt
+      FROM attendance a
+      JOIN student s ON a.sid = s.sid
+      WHERE s.cid = $1
+        AND a.event_date = CURRENT_DATE
+    ),
     ${dateRangeQuery}
     -- 计算每天的出勤情况
     daily_attendance AS (
@@ -165,6 +175,7 @@ export async function getClassAnalysis(cid, startDate, endDate) {
       ci.class_name,
       si.expected_attend,
       si.student_num,
+      (si.expected_attend - ta.today_absent_cnt + ta.today_temp_cnt)::int AS today_actual_attend,
       COALESCE(
         JSON_AGG(
           JSON_BUILD_OBJECT(
@@ -184,9 +195,10 @@ export async function getClassAnalysis(cid, startDate, endDate) {
       ) AS daily_attendance_rates
     FROM class_info ci
     CROSS JOIN student_info si
+    CROSS JOIN today_attendance ta
     CROSS JOIN date_range dr
     LEFT JOIN daily_attendance da ON dr.event_date = da.event_date
-    GROUP BY ci.cid, ci.class_name, si.expected_attend, si.student_num
+    GROUP BY ci.cid, ci.class_name, si.expected_attend, si.student_num, ta.today_absent_cnt, ta.today_temp_cnt
   `;
 
     const result = await db.query(sql, params);
