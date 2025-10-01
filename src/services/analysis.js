@@ -293,7 +293,8 @@ export async function getStudentsAnalysis({ sid, startDate, endDate }) {
 
     const result = await db.query(query, params);
 
-    return result.rows.map(r => ({
+    const r = result.rows[0];
+    return {
         sid: r.sid,
         student_name: r.student_name,
         attendance: r.attendance,
@@ -309,5 +310,5 @@ export async function getStudentsAnalysis({ sid, startDate, endDate }) {
             sick_list: r.sick_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
             temp_list: r.temp_list.map(d => formatDatefromsqldatetoyyyymmdd(d))
         }
-    }));
+    };
 }

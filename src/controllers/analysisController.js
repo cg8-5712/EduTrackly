@@ -123,16 +123,14 @@ export async function getStudentsAnalysisController(req, res) {
         }
 
         logger.info('Fetching students analysis', { sid, startDate, endDate });
-        const students = await getStudentsAnalysis({ sid, startDate, endDate });
+        const data = await getStudentsAnalysis({ sid, startDate, endDate });
 
-        logger.debug('Students analysis retrieved successfully', {
-            studentCount: students.length
-        });
+        logger.debug('Students analysis retrieved successfully', { sid });
 
         return res.status(200).json({
             code: 0,
             message: "Get students analysis successfully",
-            students,
+            data,
             timestamp: Date.now()
         });
     } catch (error) {
