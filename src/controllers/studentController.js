@@ -211,7 +211,7 @@ export async function deleteStudentController(req, res) {
         });
 
     } catch (error) {
-        logger.error('Error in deleteStudent controller', { error });
+        logger. error('Error in deleteStudent controller', { error });
 
         if (error.code && typeof error.code === "number") {
             logger.warn('Handled service error in deleteStudent', { code: error.code, message: error.message });
