@@ -102,10 +102,18 @@ export async function getClassAnalysisController(req, res) {
  * @param {Object} res - Express response object
  */
 export async function getStudentsAnalysisController(req, res) {
-    let { cid, startDate, endDate } = req.query;
-    logger.debug('Students analysis requested', { cid, startDate, endDate });
+    let { sid, startDate, endDate } = req.query;
+    logger.debug('Students analysis requested', { sid, startDate, endDate });
 
     try {
+        if (!sid) {
+            logger.warn('Missing sid in students analysis request');
+            return res.status(400).json({
+                ...ErrorCodes.ParamsErrors.REQUIRE_STUDENT_ID,
+                timestamp: Date.now()
+            });
+        }
+
         // 日期格式转换
         if (startDate) {
             startDate = formatDatefromyyyymmddtopsqldate(startDate);
@@ -114,8 +122,8 @@ export async function getStudentsAnalysisController(req, res) {
             endDate = formatDatefromyyyymmddtopsqldate(endDate);
         }
 
-        logger.info('Fetching students analysis', { cid, startDate, endDate });
-        const students = await getStudentsAnalysis({ cid, startDate, endDate });
+        logger.info('Fetching students analysis', { sid, startDate, endDate });
+        const students = await getStudentsAnalysis({ sid, startDate, endDate });
 
         logger.debug('Students analysis retrieved successfully', {
             studentCount: students.length
@@ -130,7 +138,7 @@ export async function getStudentsAnalysisController(req, res) {
     } catch (error) {
         logger.error('Failed to get students analysis:', {
             error: error.message,
-            cid,
+            sid,
             startDate,
             endDate,
             stack: error.stack

@@ -205,7 +205,7 @@ export async function getClassAnalysis(cid, startDate, endDate) {
 
 /**
  * 获取学生信息及事件统计
- * @param {number} cid 班级ID，可选
+ * @param {number} sid 学生ID，必选
  * @param {string|number} startDate 起始日期 YYYYMMDD，可选
  * @param {string|number} endDate 截止日期 YYYYMMDD，可选
  * 规则：
@@ -213,23 +213,24 @@ export async function getClassAnalysis(cid, startDate, endDate) {
  * - 只传入 startDate，数据从 startDate 到当前日期
  * - 两者都传入，使用指定范围
  */
-export async function getStudentsAnalysis({ cid, startDate, endDate }) {
-    const params = [];
-    let idx = 1;
-
-    let whereClause = "WHERE 1=1";
-
-    if (cid !== undefined && cid !== null && cid !== "") {
-        // 检查班级是否存在
-        const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
-        if (classRes.rows.length === 0) {
-            logger.warn(`CID ${cid} does not exist`);
-            throw ClassErrors.NOT_FOUND;
-        }
-
-        whereClause += ` AND s.cid = $${idx++}`;
-        params.push(parseInt(cid, 10));
+export async function getStudentsAnalysis({ sid, startDate, endDate }) {
+    // sid 为必选参数
+    if (sid === undefined || sid === null || sid === "") {
+        logger.warn('SID is required but not provided');
+        throw ClassErrors.NOT_FOUND;
     }
+
+    // 检查学生是否存在
+    const studentRes = await db.query(`SELECT 1 FROM student WHERE sid = $1 LIMIT 1`, [sid]);
+    if (studentRes.rows.length === 0) {
+        logger.warn(`SID ${sid} does not exist`);
+        throw ClassErrors.NOT_FOUND;
+    }
+
+    const params = [parseInt(sid, 10)];
+    let idx = 2;
+
+    let whereClause = "WHERE s.sid = $1";
 
     // 应用日期规则
     let actualStartDate = startDate;
