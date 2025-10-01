@@ -226,13 +226,24 @@ export async function deleteStudentController(req, res) {
 }
 
 /**
- * PUT /student/events
+ * PUT /student/events 或 PUT /student/events/:date
  * 批量插入或更新学生事件
  */
 export async function putStudentEventController(req, res) {
     try {
         const events = req.body;
-        logger.debug('Received putStudentEvent request', { eventCount: events?.length });
+        // 支持两种方式：路径参数 (/event/2024-10-01) 或 query 参数 (/event?date=2024-10-01)
+        const date = req.params.date || req.query.date;
+        logger.debug('Received putStudentEvent request', { eventCount: events?.length, date });
+
+        // 如果通过 query 参数传递了日期，需要验证管理员权限
+        // if (date && req.query.date && !req.aid) {
+        //     logger.warn('Missing admin authorization for date-specific operation');
+        //     return res.status(401).json({
+        //         ...ErrorCodes.AuthErrors.UNAUTHORIZED,
+        //         timestamp: Date.now()
+        //     });
+        // }
 
         if (!events || !Array.isArray(events)) {
             logger.warn('Invalid or missing events array in request body');
@@ -242,8 +253,8 @@ export async function putStudentEventController(req, res) {
             });
         }
 
-        const result = await studentService.putStudentEvents(events);
-        logger.info('Student events updated successfully', { count: events.length });
+        const result = await studentService.putStudentEvents(events, date);
+        logger.info('Student events updated successfully', { count: events.length, date });
 
         return res.status(200).json(result);
 

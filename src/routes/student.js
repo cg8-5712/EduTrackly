@@ -18,6 +18,7 @@ router.put('/attendance-change', jwtRequire, attendanceChangeController);
 
 router.delete('/delete', jwtRequire, deleteStudentController);
 
+router.put('/event/:date', jwtRequire, putStudentEventController);
 router.put('/event', putStudentEventController);
 
 export default router;

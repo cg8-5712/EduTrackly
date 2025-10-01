@@ -162,14 +162,19 @@ export async function changeAttendance(sid, attendance) {
 }
 
 /**
- * 删除学生
- * @param {number} sid 学生ID
- * @returns {Promise<boolean>} 是否删除成功
+ * 批量插入或更新学生事件
+ * @param {Array} events 学生事件数组
+ * @param {string} date 可选，指定日期 (格式: YYYY-MM-DD)，如果未提供则使用当前日期
+ * @returns {Promise<object>} 操作结果
  */
-export async function putStudentEvents(events) {
+export async function putStudentEvents(events, date = null) {
     if (!Array.isArray(events) || events.length === 0) {
         throw ErrorCodes.ParamsErrors.REQUIRE_BODY;
     }
+
+    // 确定使用的日期值
+    const targetDate = date || 'CURRENT_DATE';
+    const isCurrentDate = !date;
 
     const insertValues = [];
     const insertParams = [];
@@ -193,18 +198,18 @@ export async function putStudentEvents(events) {
 
         insertParams.push(event.sid, event.event_type);
         const offset = insertParams.length - 1; // 每个 event 占两个参数
-        insertValues.push(`($${offset}, CURRENT_DATE, $${offset + 1})`);
+        insertValues.push(`($${offset}, ${isCurrentDate ? 'CURRENT_DATE' : `'${targetDate}'`}, $${offset + 1})`);
     });
 
-    // 先删除指定 sid 的今日记录
+    // 先删除指定 sid 的指定日期记录
     if (deleteSids.length > 0) {
         const deleteQuery = `
             DELETE FROM attendance
-            WHERE event_date = CURRENT_DATE
+            WHERE event_date = ${isCurrentDate ? 'CURRENT_DATE' : `'${targetDate}'`}
               AND sid = ANY($1)
         `;
         await db.query(deleteQuery, [deleteSids]);
-        logger.debug(`Deleted today's attendance for SIDs: ${deleteSids}`);
+        logger.debug(`Deleted attendance for date ${targetDate} and SIDs: ${deleteSids}`);
     }
 
     // 插入或更新
@@ -215,7 +220,7 @@ export async function putStudentEvents(events) {
             ON CONFLICT (sid, event_date)
             DO UPDATE SET event_type = EXCLUDED.event_type
         `;
-        logger.debug(`Inserting/updating attendance: ${insertQuery} with params ${insertParams}`);
+        logger.debug(`Inserting/updating attendance for date ${targetDate}: ${insertQuery} with params ${insertParams}`);
         await db.query(insertQuery, insertParams);
     }
 
