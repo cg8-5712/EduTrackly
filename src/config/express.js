@@ -1,34 +1,33 @@
 // src/config/express.js
 import cors from "cors";
-import chalk from "chalk";
 import helmet from "helmet";
 import compression from "compression";
 import express from "express";
-import { loggerMiddleware } from "../middleware/loggerMiddleware.js";
+import logger, { loggerMiddleware } from "../middleware/loggerMiddleware.js";
 
 export default function configureExpress(app) {
-    console.log(chalk.cyan("🔧 Configuring Express..."));
+    logger.info("Configuring Express...");
 
     // CORS
     app.use(cors());
-    console.log(chalk.gray("  ✓ CORS enabled"));
+    logger.debug("  - CORS enabled");
 
-    // 安全头
+    // Security headers
     app.use(helmet());
-    console.log(chalk.gray("  ✓ Helmet security headers enabled"));
+    logger.debug("  - Helmet security headers enabled");
 
-    // GZIP 压缩
+    // GZIP compression
     app.use(compression());
-    console.log(chalk.gray("  ✓ Compression enabled"));
+    logger.debug("  - Compression enabled");
 
-    // Body 解析
+    // Body parsers
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
-    console.log(chalk.gray("  ✓ Body parsers enabled"));
+    logger.debug("  - Body parsers enabled");
 
-    // 日志中间件
+    // Logger middleware
     app.use(loggerMiddleware);
-    console.log(chalk.gray("  ✓ Logger middleware enabled"));
+    logger.debug("  - Logger middleware enabled");
 
-    console.log(chalk.green("✅ Express configured successfully\n"));
+    logger.info("Express configured successfully");
 }

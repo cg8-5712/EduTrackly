@@ -5,31 +5,31 @@ import config from "../config/config.js";
 import logger from "../middleware/loggerMiddleware.js";
 
 /**
- * 用户认证
- * @param {string} password - 输入的密码
- * @param {string} ip - 登录请求的 IP 地址
- * @returns {Object|null} - 登录结果或 null
+ * User authentication
+ * @param {string} password - Input password
+ * @param {string} ip - IP address of the login request
+ * @returns {Object|null} - Login result or null
  */
 export async function authenticateUser(password, ip) {
-    // 查找所有 admin 账号
+    // Find all admin accounts
     const query = "SELECT aid, password, time AS last_login_time, ip AS last_login_ip FROM admin";
     const result = await db.query(query);
 
     if (result.rowCount === 0) {
-        return null; // 没有账号
+        return null; // No accounts found
     }
 
-    // 遍历所有账号，检查密码是否匹配
+    // Iterate through all accounts, check if password matches
     for (const admin of result.rows) {
         if (password === admin.password) {
-            // 生成 JWT
-            const expiresIn = parseInt(config.jwt.expires) || 3600; // 默认 1 小时
+            // Generate JWT
+            const expiresIn = parseInt(config.jwt.expires) || 3600; // Default 1 hour
             const token = jwt.sign({ aid: admin.aid }, config.jwt.secret, { expiresIn });
 
-            // 更新最后登录信息
+            // Update last login information
             const updateQuery = `
-                UPDATE admin 
-                SET time = CURRENT_TIMESTAMP, ip = $1 
+                UPDATE admin
+                SET time = CURRENT_TIMESTAMP, ip = $1
                 WHERE aid = $2
             `;
             await db.query(updateQuery, [ip, admin.aid]);
@@ -50,5 +50,5 @@ export async function authenticateUser(password, ip) {
         }
     }
 
-    return null; // 没有匹配的密码
+    return null; // No matching password
 }

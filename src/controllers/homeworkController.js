@@ -150,7 +150,7 @@ export async function createHomework(req, res) {
         let { cid, homework_content, due_date } = req.body;
         logger.debug('Received createHomework request', { cid, due_date });
 
-        // 参数校验
+        // Parameter validation
         if (!cid) {
             logger.warn('Missing required parameter: class id');
             return res.status(400).json({
@@ -171,7 +171,7 @@ export async function createHomework(req, res) {
             due_date = moment().format('YYYYMMDD');
         }
 
-        // 日期格式校验
+        // Date format validation
         const dueDate = moment(due_date, 'YYYYMMDD', true); // strict mode
         if (!dueDate.isValid()) {
             logger.error(`Invalid due date format: ${due_date}`);
@@ -206,7 +206,7 @@ export async function deleteHomework(req, res) {
         const { cid, date } = req.query;
         logger.debug('Received deleteHomework request', { cid, date });
 
-        // 参数校验
+        // Parameter validation
         if (!cid) {
             logger.warn('Missing required parameter: class id');
             return res.status(400).json({
@@ -223,7 +223,7 @@ export async function deleteHomework(req, res) {
             });
         }
 
-        // 日期格式校验
+        // Date format validation
         const dueDate = moment(date, 'YYYYMMDD', true); // strict mode
         if (!dueDate.isValid()) {
             logger.error(`Invalid due date format: ${date}`);

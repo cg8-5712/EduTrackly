@@ -11,9 +11,16 @@
       "Bash(git check-ignore:*)",
       "Bash(node:*)",
       "Bash(npm --version)",
-      "Bash(npm install --save-dev eslint @eslint/js globals jest supertest)"
+      "Bash(npm install --save-dev eslint @eslint/js globals jest supertest)",
+      "Bash(npm install pino pino-pretty)",
+      "Bash(powershell -NoProfile -Command \"echo ''{\"\"workspace\"\":{\"\"current_dir\"\":\"\"F:\\bian\\frontend\\EduTrackly\"\"},\"\"model\"\":{\"\"display_name\"\":\"\"Claude 3.5 Sonnet\"\"}}'' | powershell -NoProfile -Command \"\"$input = $input | ConvertFrom-Json; $cwd = $input.workspace.current_dir; $model = $input.model.display_name; $time = Get-Date -Format ''HH:mm:ss''; $branch = ''''; try { $branch = git -C $cwd rev-parse --abbrev-ref HEAD 2>$null; if ($branch) { $branch = \"\" [$branch]\"\" } } catch {}; Write-Host \"\"$cwd$branch | $time | $model\"\"\"\"\")"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "powershell -NoProfile -Command \"$input = $input | ConvertFrom-Json; $cwd = $input.workspace.current_dir; $model = $input.model.display_name; $time = Get-Date -Format 'HH:mm:ss'; $branch = ''; try { $branch = git -C $cwd rev-parse --abbrev-ref HEAD 2>$null; if ($branch) { $branch = \" [$branch]\" } } catch {}; Write-Host \"$cwd$branch | $time | $model\"\""
+  },
+  "outputStyle": "default"
 }

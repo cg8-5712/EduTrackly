@@ -1,4 +1,4 @@
-// 错误码统一管理
+// Unified error code management
 export const AuthErrors = {
     INVALID_TOKEN: { code: 1001, message: "Invalid or expired token" },
     LOGIN_FAILED: { code: 1002, message: "Login failed" },
@@ -78,5 +78,4 @@ export const ParamsErrors = {
     INVALID_SORT_ORDER: { code: 7017, message: "Sort order must be 'asc' or 'desc'" },
     REQUIRE_STUDENTS_ARRAY: { code: 7018, message: "Students array is required" },
     REQUIRE_EVENTS_ARRAY: { code: 7019, message: "Events array is required" },
-    REQUIRE_VALID_ATTENDANCE: { code: 7020, message: "Attendance must be true/false" }
 }

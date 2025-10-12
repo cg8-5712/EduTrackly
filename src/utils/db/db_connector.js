@@ -14,9 +14,9 @@ class DatabaseConnector {
             database: config.db.name,
             user: config.db.username,
             password: config.db.password,
-            max: 20, // 连接池最大连接数
-            idleTimeoutMillis: 30000, // 空闲连接超时时间
-            connectionTimeoutMillis: 2000 // 连接超时时间
+            max: 20, // Maximum number of connections in pool
+            idleTimeoutMillis: 30000, // Idle connection timeout
+            connectionTimeoutMillis: 2000 // Connection timeout
         };
     }
 
@@ -24,20 +24,20 @@ class DatabaseConnector {
         try {
             this.pool = new Pool(this.config);
 
-            logger.debug('数据库连接信息: ', JSON.stringify(this.config, null, 2));
+            logger.debug('Database connection info: ', JSON.stringify(this.config, null, 2));
 
-            // 测试连接
+            // Test connection
             const client = await this.pool.connect();
             client.release();
 
-            // 设置错误处理
+            // Setup error handling
             this.pool.on('error', (err) => {
-                logger.error('数据库连接池异常:', err.message);
+                logger.error('Database connection pool error:', err.message);
             });
 
             return true;
         } catch (error) {
-            logger.error('数据库连接失败:', error.message);
+            logger.error('Database connection failed:', error.message);
             throw error;
         }
     }
@@ -49,11 +49,11 @@ class DatabaseConnector {
             const duration = Date.now() - start;
 
             logger.debug(
-                `执行查询: ${text} | 参数: ${JSON.stringify(params)} | 耗时: ${duration}ms | 返回行数: ${res.rowCount}`
+                `Executing query: ${text} | Params: ${JSON.stringify(params)} | Duration: ${duration}ms | Rows returned: ${res.rowCount}`
             );
             return res;
         } catch (error) {
-            logger.error(`查询执行失败: ${error.message} | SQL: ${text} | 参数: ${JSON.stringify(params)}`);
+            logger.error(`Query execution failed: ${error.message} | SQL: ${text} | Params: ${JSON.stringify(params)}`);
             throw error;
         }
     }
@@ -77,15 +77,15 @@ class DatabaseConnector {
     async close() {
         try {
             await this.pool.end();
-            logger.info('数据库连接已关闭');
+            logger.info('Database connection closed');
         } catch (error) {
-            logger.error('关闭数据库连接失败:', error.message);
+            logger.error('Failed to close database connection:', error.message);
             throw error;
         }
     }
 }
 
-// 创建单例实例
+// Create singleton instance
 const db = new DatabaseConnector();
 
 export default db;

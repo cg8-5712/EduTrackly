@@ -5,8 +5,8 @@ import { formatDatefromsqldatetoyyyymmdd} from "../utils/dateUtils.js";
 import * as pagination from "../utils/pagination.js";
 
 /**
- * 添加学生
- * @param {Array} students 学生数组，每个学生对象包含 cid, student_name, attendance
+ * Add students
+ * @param {Array} students Student array, each student object contains cid, student_name, attendance
  */
 
 export async function addStudents(students) {
@@ -27,7 +27,7 @@ export async function addStudents(students) {
             throw ParamsErrors.REQUIRE_CID;
         }
 
-        // 检查班级是否存在
+        // Check if class exists
         const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [stu.cid]);
         if (classRes.rows.length === 0) {
             logger.warn(`CID ${stu.cid} does not exist`);
@@ -48,10 +48,10 @@ export async function addStudents(students) {
 }
 
 /**
- * 获取学生信息
- * @param {number} sid 学生ID，可选
- * @param {string} student_name 学生名字，可选
- * @returns {Promise<object>} 学生及其事件
+ * Get student information
+ * @param {number} sid Student ID, optional
+ * @param {string} student_name Student name, optional
+ * @returns {Promise<object>} Student and their events
  */
 export async function getStudent(sid, student_name) {
     if (!sid && !student_name) {
@@ -83,7 +83,7 @@ export async function getStudent(sid, student_name) {
 
     const student = studentRes.rows[0];
 
-    // 查询该学生的事件
+    // Query student events
     const eventQuery = `
         SELECT event_date, event_type
         FROM attendance
@@ -92,7 +92,7 @@ export async function getStudent(sid, student_name) {
     `;
     const eventRes = await db.query(eventQuery, [student.sid]);
 
-    // 格式化日期
+    // Format dates
     const events = (eventRes.rows || []).map(ev => ({
         ...ev,
         event_date: formatDatefromsqldatetoyyyymmdd(ev.event_date)
@@ -111,7 +111,7 @@ export async function listStudents({ cid, page, size }) {
     const params = [];
 
     if (cid) {
-        // 检查班级是否存在
+        // Check if class exists
         const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
         if (classRes.rows.length === 0) {
             logger.warn(`CID ${cid} does not exist`);
@@ -122,19 +122,19 @@ export async function listStudents({ cid, page, size }) {
         params.push(cid);
     }
 
-    // 查询总数
+    // Query total count
     const totalResult = await db.query(
         `SELECT COUNT(*) AS count FROM student ${whereClause}`,
         params
     );
     const total = parseInt(totalResult.rows[0].count, 10);
 
-    // 查询分页数据
+    // Query paginated data
     const rowsResult = await db.query(
-        `SELECT cid, sid, student_name, attendance 
-         FROM student 
+        `SELECT cid, sid, student_name, attendance
+         FROM student
          ${whereClause}
-         ORDER BY sid ASC 
+         ORDER BY sid ASC
          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
         [...params, size, offset]
     );
@@ -145,16 +145,16 @@ export async function listStudents({ cid, page, size }) {
 }
 
 /**
- * 更改学生出勤状态
- * @param {number} sid 学生ID
- * @param {boolean} attendance 出勤状态
- * @returns {Promise<boolean>} 是否成功
+ * Change student attendance status
+ * @param {number} sid Student ID
+ * @param {boolean} attendance Attendance status
+ * @returns {Promise<boolean>} Whether successful
  */
 export async function changeAttendance(sid, attendance) {
     const result = await db.query(
-        `UPDATE student 
-         SET attendance = $1 
-         WHERE sid = $2 
+        `UPDATE student
+         SET attendance = $1
+         WHERE sid = $2
          RETURNING sid`,
         [attendance, sid]
     );
@@ -162,17 +162,17 @@ export async function changeAttendance(sid, attendance) {
 }
 
 /**
- * 批量插入或更新学生事件
- * @param {Array} events 学生事件数组
- * @param {string} date 可选，指定日期 (格式: YYYY-MM-DD)，如果未提供则使用当前日期
- * @returns {Promise<object>} 操作结果
+ * Batch insert or update student events
+ * @param {Array} events Student events array
+ * @param {string} date Optional, specified date (format: YYYY-MM-DD), uses current date if not provided
+ * @returns {Promise<object>} Operation result
  */
 export async function putStudentEvents(events, date = null) {
     if (!Array.isArray(events) || events.length === 0) {
         throw ErrorCodes.ParamsErrors.REQUIRE_BODY;
     }
 
-    // 确定使用的日期值
+    // Determine the date value to use
     const targetDate = date || 'CURRENT_DATE';
     const isCurrentDate = !date;
 
@@ -186,7 +186,7 @@ export async function putStudentEvents(events, date = null) {
         }
 
         if (!event.event_type) {
-            // 如果 event_type 为空，记录需要删除的 sid
+            // If event_type is empty, record the sid for deletion
             deleteSids.push(event.sid);
             return;
         }
@@ -197,11 +197,11 @@ export async function putStudentEvents(events, date = null) {
         }
 
         insertParams.push(event.sid, event.event_type);
-        const offset = insertParams.length - 1; // 每个 event 占两个参数
+        const offset = insertParams.length - 1; // Each event takes two parameters
         insertValues.push(`($${offset}, ${isCurrentDate ? 'CURRENT_DATE' : `'${targetDate}'`}, $${offset + 1})`);
     });
 
-    // 先删除指定 sid 的指定日期记录
+    // First delete records for specified sids on the specified date
     if (deleteSids.length > 0) {
         const deleteQuery = `
             DELETE FROM attendance
@@ -212,7 +212,7 @@ export async function putStudentEvents(events, date = null) {
         logger.debug(`Deleted attendance for date ${targetDate} and SIDs: ${deleteSids}`);
     }
 
-    // 插入或更新
+    // Insert or update
     if (insertValues.length > 0) {
         const insertQuery = `
             INSERT INTO attendance (sid, event_date, event_type)
@@ -233,8 +233,8 @@ export async function putStudentEvents(events, date = null) {
 
 
 /**
- * 删除学生
- * @param {number} sid 学生ID
+ * Delete student
+ * @param {number} sid Student ID
  */
 export async function deleteStudent(sid) {
     const result = await db.query(
@@ -243,7 +243,7 @@ export async function deleteStudent(sid) {
     );
 
     if (result.rowCount === 0) {
-        throw StudentErrors.NOT_FOUND; // 学生不存在
+        throw StudentErrors.NOT_FOUND; // Student not found
     }
 
     return true;

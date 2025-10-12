@@ -4,22 +4,22 @@ import logger from "../middleware/loggerMiddleware.js";
 import { formatDatefromyyyymmddtopsqldate, formatDatefromsqldatetoyyyymmdd } from "../utils/dateUtils.js";
 
 /**
- * 根据班级和日期获取作业
+ * Get homework by class and date
  */
 export async function getHomework(cid, date) {
     const sqlDate = formatDatefromyyyymmddtopsqldate(date);
     logger.debug(`Getting homework for class ${cid} on ${sqlDate}`);
 
-    // 检查班级是否存在
+    // Check if class exists
     const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (classRes.rows.length === 0) {
         logger.warn(`CID ${cid} does not exist`);
         throw ClassErrors.NOT_FOUND;
     }
 
-    // 查询作业
+    // Query homework
     const homeworkRes = await db.query(
-        `SELECT cid, chinese, math, english, physics, chemistry, biology, history, geography, politics, other, due_date 
+        `SELECT cid, chinese, math, english, physics, chemistry, biology, history, geography, politics, other, due_date
          FROM homework WHERE cid = $1 AND due_date = $2 LIMIT 1`,
         [cid, sqlDate]
     );
@@ -29,10 +29,10 @@ export async function getHomework(cid, date) {
 
     const homework = homeworkRes.rows[0];
 
-    // 构造 homework_content 对象
+    // Build homework_content object
     const homework_content = {
         chinese: homework.chinese || "",
-        maths: homework.math || "",  // 注意这里用 maths 而不是 math
+        maths: homework.math || "",  // Note: using maths instead of math
         english: homework.english || "",
         physics: homework.physics || "",
         chemistry: homework.chemistry || "",
@@ -40,10 +40,10 @@ export async function getHomework(cid, date) {
         history: homework.history || "",
         geography: homework.geography || "",
         politics: homework.politics || "",
-        others: homework.other || ""  // 注意这里用 others 而不是 other
+        others: homework.other || ""  // Note: using others instead of other
     };
 
-    // 查询班级名称
+    // Query class name
     const classQuery = `SELECT class_name FROM class WHERE cid = $1 LIMIT 1`;
     const classRes2 = await db.query(classQuery, [cid]);
     const class_name = classRes2.rows.length > 0 ? classRes2.rows[0].class_name : null;
@@ -60,24 +60,24 @@ export async function getHomework(cid, date) {
 }
 
 /**
- * 列出作业（分页 + 条件筛选）
+ * List homework (pagination + conditional filtering)
  */
 /**
- * 获取作业列表，支持分页和筛选
+ * Get homework list with pagination and filtering
  * @param {Object} options
- * @param {number} options.cid - 班级ID，可选
- * @param {string} options.startDate - 起始日期 YYYYMMDD，可选
- * @param {string} options.endDate - 结束日期 YYYYMMDD，可选
- * @param {number} options.page - 页码，从1开始
- * @param {number} options.size - 每页数量
- * @param {string} options.order - 排序 desc 或 incs
+ * @param {number} options.cid - Class ID, optional
+ * @param {string} options.startDate - Start date YYYYMMDD, optional
+ * @param {string} options.endDate - End date YYYYMMDD, optional
+ * @param {number} options.page - Page number, starts from 1
+ * @param {number} options.size - Items per page
+ * @param {string} options.order - Sort order: desc or incs
  */
 export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 20, order = 'desc' }) {
     const conditions = [];
     const params = [];
 
     if (cid) {
-        // 检查班级是否存在
+        // Check if class exists
         const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
         if (classRes.rows.length === 0) {
             logger.warn(`CID ${cid} does not exist`);
@@ -134,7 +134,7 @@ export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 
         due_date: formatDatefromsqldatetoyyyymmdd(r.due_date)
     }));
 
-    // 获取总数
+    // Get total count
     const countQuery = `SELECT COUNT(*) FROM homework h ${whereClause}`;
     const countRes = await db.query(countQuery, params.slice(0, params.length - 2));
     const total = parseInt(countRes.rows[0].count, 10);
@@ -145,22 +145,22 @@ export async function listHomeworks({ cid, startDate, endDate, page = 1, size = 
 }
 
 /**
- * 创建或更新作业
+ * Create or update homework
  */
 export async function createHomework({ cid, homework_content, due_date }) {
     const sqlDate = formatDatefromyyyymmddtopsqldate(due_date.toString());
 
-    // 检查班级是否存在
+    // Check if class exists
     const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (classRes.rows.length === 0) {
         logger.warn(`CID ${cid} does not exist`);
         throw ClassErrors.NOT_FOUND;
     }
 
-    // 从 homework_content 对象中提取各科目内容
+    // Extract subject content from homework_content object
     const {
         chinese = null,
-        maths = null,  // 注意这里接收 maths
+        maths = null,  // Note: receiving maths
         english = null,
         physics = null,
         chemistry = null,
@@ -168,14 +168,14 @@ export async function createHomework({ cid, homework_content, due_date }) {
         history = null,
         geography = null,
         politics = null,
-        others = null  // 注意这里接收 others
+        others = null  // Note: receiving others
     } = homework_content;
 
     await db.query(`
         INSERT INTO homework (cid, chinese, math, english, physics, chemistry, biology, history, geography, politics, other, due_date)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         ON CONFLICT (cid, due_date)
-            DO UPDATE SET 
+            DO UPDATE SET
                 chinese = EXCLUDED.chinese,
                 math = EXCLUDED.math,
                 english = EXCLUDED.english,
@@ -187,17 +187,17 @@ export async function createHomework({ cid, homework_content, due_date }) {
                 politics = EXCLUDED.politics,
                 other = EXCLUDED.other
     `, [cid, chinese, maths, english, physics, chemistry, biology, history, geography, politics, others, sqlDate]);
-    // 注意这里存储时 maths -> math, others -> other
+    // Note: when storing, maths -> math, others -> other
 
     logger.info(`Homework for class ${cid} on ${sqlDate} created/updated successfully`);
     return { cid, due_date: sqlDate, homework_content };
 }
 
 /**
- * 删除作业
+ * Delete homework
  */
 export async function deleteHomework(cid, date) {
-    // 检查班级是否存在
+    // Check if class exists
     const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (classRes.rows.length === 0) {
         logger.warn(`CID ${cid} does not exist`);

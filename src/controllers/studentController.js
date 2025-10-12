@@ -5,7 +5,7 @@ import { handleControllerError } from '../middleware/error_handler.js';
 
 /**
  * POST /students/add
- * 批量添加学生
+ * Batch add students
  */
 export async function addStudentsController(req, res) {
     try {
@@ -47,7 +47,7 @@ export async function addStudentsController(req, res) {
 
 /**
  * GET /student
- * 查询单个学生
+ * Get a single student
  */
 export async function getStudentController(req, res) {
     try {
@@ -84,7 +84,7 @@ export async function getStudentController(req, res) {
 
 /**
  * GET /students/list
- * 获取学生列表（分页）
+ * Get list of students (with pagination)
  */
 export async function getStudentlistController(req, res) {
     try {
@@ -120,7 +120,7 @@ export async function getStudentlistController(req, res) {
 
 /**
  * PUT /student/attendance-change
- * 更改出勤状态
+ * Change attendance status
  */
 export async function attendanceChangeController(req, res) {
     try {
@@ -186,7 +186,7 @@ export async function attendanceChangeController(req, res) {
 
 /**
  * DELETE /student/delete
- * 删除学生
+ * Delete a student
  */
 export async function deleteStudentController(req, res) {
     try {
@@ -226,17 +226,17 @@ export async function deleteStudentController(req, res) {
 }
 
 /**
- * PUT /student/events 或 PUT /student/events/:date
- * 批量插入或更新学生事件
+ * PUT /student/events or PUT /student/events/:date
+ * Batch insert or update student events
  */
 export async function putStudentEventController(req, res) {
     try {
         const events = req.body;
-        // 支持两种方式：路径参数 (/event/2024-10-01) 或 query 参数 (/event?date=2024-10-01)
+        // Support both methods: path parameter (/event/2024-10-01) or query parameter (/event?date=2024-10-01)
         const date = req.params.date || req.query.date;
         logger.debug('Received putStudentEvent request', { eventCount: events?.length, date });
 
-        // 如果通过 query 参数传递了日期，需要验证管理员权限
+        // If date is passed via query parameter, validate admin authorization
         // if (date && req.query.date && !req.aid) {
         //     logger.warn('Missing admin authorization for date-specific operation');
         //     return res.status(401).json({

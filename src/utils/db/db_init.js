@@ -10,10 +10,10 @@ export default async function initializeDatabase() {
         await db.initialize();
         logger.info('✅ Database connection initialized');
 
-        // 判断数据库是否已经存在表
+        // Check if database tables already exist
         const result = await db.query(`
-            SELECT table_name 
-            FROM information_schema.tables 
+            SELECT table_name
+            FROM information_schema.tables
             WHERE table_schema = 'public'
             LIMIT 1;
         `);

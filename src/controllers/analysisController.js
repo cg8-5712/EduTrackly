@@ -61,7 +61,7 @@ export async function getClassAnalysisController(req, res) {
             });
         }
 
-        // 日期格式转换
+        // Date format conversion
         if (startDate) {
             startDate = formatDatefromyyyymmddtopsqldate(startDate);
         }
@@ -114,7 +114,7 @@ export async function getStudentsAnalysisController(req, res) {
             });
         }
 
-        // 日期格式转换
+        // Date format conversion
         if (startDate) {
             startDate = formatDatefromyyyymmddtopsqldate(startDate);
         }

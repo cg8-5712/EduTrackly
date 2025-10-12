@@ -17,16 +17,16 @@ export async function createClass(className) {
         };
 
     } catch (err) {
-        // PostgreSQL 唯一约束错误：23505
+        // PostgreSQL unique constraint error: 23505
         if (err.code === '23505') {
             return {
-                code: 4002, // 唯一约束冲突
+                code: 4002, // Unique constraint conflict
                 message: 'class_name already exists'
             };
         }
 
         return {
-            code: 5001, // 未知数据库错误
+            code: 5001, // Unknown database error
             message: 'database error'
         };
     }
@@ -49,7 +49,7 @@ export async function getClass( param ) {
 
     if (result.rows.length === 0) {
         logger.warn(`No class found with the parameter: ${param}`);
-        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+        throw ClassErrors.NOT_FOUND; // Throw corresponding error object
     }
 
     const class_result = result.rows[0];
@@ -86,7 +86,7 @@ export async function listClass({ order = 'asc', page = 1, size = 20 }) {
             create_time: formatDateFromSqlTimestampToTimestamp(r.create_time)
         }));
 
-        // 获取总数
+        // Get total count
         const countQuery = `SELECT COUNT(*) FROM class`;
         const countRes = await db.query(countQuery);
         const total = parseInt(countRes.rows[0].count, 10);
@@ -110,7 +110,7 @@ export async function listClass({ order = 'asc', page = 1, size = 20 }) {
 }
 
 /**
- * 删除班级及其学生
+ * Delete class and its students
  * @param {object} param { cid?: number, class_name?: string }
  */
 export async function deleteClass(param) {
@@ -135,7 +135,7 @@ export async function deleteClass(param) {
         throw ClassErrors.NOT_FOUND;
     }
 
-    // 删除该班级的学生
+    // Delete students from this class
     const cidToDelete = classResult.rows[0].cid;
     await db.query(
         `DELETE FROM student WHERE cid = $1`,

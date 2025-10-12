@@ -8,7 +8,7 @@ export async function getTodayAnalysis(cid, date) {
     const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (studentRes.rows.length === 0) {
         logger.warn(`CID ${cid} does not exist in class table`);
-        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+        throw ClassErrors.NOT_FOUND; // Throw corresponding error object
     }
 
     const result = await db.query(
@@ -88,20 +88,20 @@ export async function getClassAnalysis(cid, startDate, endDate) {
     const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
     if (studentRes.rows.length === 0) {
         logger.warn(`CID ${cid} does not exist in class table`);
-        throw ClassErrors.NOT_FOUND; // 直接抛出对应错误对象
+        throw ClassErrors.NOT_FOUND; // Throw corresponding error object
     }
 
-    // 日期规则处理
+    // Date rule handling
     let actualStartDate = startDate;
     let actualEndDate = endDate;
 
-    // 如果只传入 endDate，则无效，忽略
+    // If only endDate is provided, it's invalid and will be ignored
     if (!startDate && endDate) {
         actualStartDate = null;
         actualEndDate = null;
     }
 
-    // 如果没有传入任何日期，默认使用近15天
+    // If no dates are provided, default to the last 15 days
     if (!actualStartDate && !actualEndDate) {
         actualEndDate = formatDatefromyyyymmddtopsqldate(
             new Date().toISOString().split('T')[0].replace(/-/g, '')
@@ -113,7 +113,7 @@ export async function getClassAnalysis(cid, startDate, endDate) {
         );
     }
 
-    // 如果只传入 startDate，endDate 默认为当前日期
+    // If only startDate is provided, endDate defaults to current date
     if (actualStartDate && !actualEndDate) {
         actualEndDate = formatDatefromyyyymmddtopsqldate(
             new Date().toISOString().split('T')[0].replace(/-/g, '')
@@ -148,7 +148,7 @@ export async function getClassAnalysis(cid, startDate, endDate) {
       FROM student s
       WHERE s.cid = $1
     ),
-    -- 今天的出勤情况
+    -- Today's attendance
     today_attendance AS (
       SELECT
         COUNT(*) FILTER (WHERE a.event_type IN ('official', 'personal', 'sick'))::int AS today_absent_cnt,
@@ -159,7 +159,7 @@ export async function getClassAnalysis(cid, startDate, endDate) {
         AND a.event_date = CURRENT_DATE
     ),
     ${dateRangeQuery}
-    -- 计算每天的出勤情况
+    -- Calculate daily attendance
     daily_attendance AS (
       SELECT
         a.event_date,
@@ -204,7 +204,7 @@ export async function getClassAnalysis(cid, startDate, endDate) {
     const result = await db.query(sql, params);
     const row = result.rows[0];
 
-    // 格式化日期为 YYYYMMDD
+    // Format date as YYYYMMDD
     if (row.daily_attendance_rates && row.daily_attendance_rates.length > 0) {
         row.daily_attendance_rates = row.daily_attendance_rates.map(item => ({
             date: formatDatefromsqldatetoyyyymmdd(item.date),
@@ -216,23 +216,23 @@ export async function getClassAnalysis(cid, startDate, endDate) {
 }
 
 /**
- * 获取学生信息及事件统计
- * @param {number} sid 学生ID，必选
- * @param {string|number} startDate 起始日期 YYYYMMDD，可选
- * @param {string|number} endDate 截止日期 YYYYMMDD，可选
- * 规则：
- * - 只传入 endDate 无效，将被忽略
- * - 只传入 startDate，数据从 startDate 到当前日期
- * - 两者都传入，使用指定范围
+ * Get student information and event statistics
+ * @param {number} sid Student ID, required
+ * @param {string|number} startDate Start date YYYYMMDD, optional
+ * @param {string|number} endDate End date YYYYMMDD, optional
+ * Rules:
+ * - Only providing endDate is invalid and will be ignored
+ * - Only providing startDate, data is from startDate to current date
+ * - Both provided, use the specified range
  */
 export async function getStudentsAnalysis({ sid, startDate, endDate }) {
-    // sid 为必选参数
+    // sid is a required parameter
     if (sid === undefined || sid === null || sid === "") {
         logger.warn('SID is required but not provided');
         throw ClassErrors.NOT_FOUND;
     }
 
-    // 检查学生是否存在
+    // Check if student exists
     const studentRes = await db.query(`SELECT 1 FROM student WHERE sid = $1 LIMIT 1`, [sid]);
     if (studentRes.rows.length === 0) {
         logger.warn(`SID ${sid} does not exist`);
@@ -244,17 +244,17 @@ export async function getStudentsAnalysis({ sid, startDate, endDate }) {
 
     let whereClause = "WHERE s.sid = $1";
 
-    // 应用日期规则
+    // Apply date rules
     let actualStartDate = startDate;
     let actualEndDate = endDate;
 
-    // 如果只传入 endDate，则无效，忽略
+    // If only endDate is provided, it's invalid and will be ignored
     if (!startDate && endDate) {
         actualStartDate = null;
         actualEndDate = null;
     }
 
-    // 如果只传入 startDate，endDate 默认为当前日期
+    // If only startDate is provided, endDate defaults to current date
     if (actualStartDate && !actualEndDate) {
         actualEndDate = formatDatefromyyyymmddtopsqldate(
             new Date().toISOString().split('T')[0].replace(/-/g, '')

@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 const execAsync = util.promisify(exec);
 
 /**
- * 获取系统信息：CPU、Memory、Disk、Network、Load
+ * Get system information: CPU, Memory, Disk, Network, Load
  */
 export async function getSystemInfo() {
     const cpus = calculateCpuUsageAll();
@@ -44,14 +44,14 @@ export async function getSystemInfo() {
         });
     }
 
-    // 获取操作系统相关信息
+    // Get operating system information
     const osInfo = {
-        type: os.type(), // 操作系统类型，如 'Linux', 'Darwin', 'Windows_NT'
-        platform: os.platform(), // 操作系统平台，如 'linux', 'win32'
-        release: os.release(), // 操作系统发布版本
-        arch: os.arch(), // 操作系统架构，如 'x64', 'arm64'
-        uptime: os.uptime(), // 系统启动以来的时间（单位：秒）
-        hostname: os.hostname(), // 主机名
+        type: os.type(), // Operating system type, e.g. 'Linux', 'Darwin', 'Windows_NT'
+        platform: os.platform(), // Operating system platform, e.g. 'linux', 'win32'
+        release: os.release(), // Operating system release version
+        arch: os.arch(), // Operating system architecture, e.g. 'x64', 'arm64'
+        uptime: os.uptime(), // System uptime since boot (in seconds)
+        hostname: os.hostname(), // Hostname
     };
 
     return { cpu: cpus, memory, load, disk, network, os: osInfo };
@@ -74,7 +74,7 @@ function calculateCpuUsageAll() {
     return results;
 }
 
-// ===================== Disk 获取 =====================
+// ===================== Disk Retrieval =====================
 async function getWindowsDisk() {
     try {
         const { stdout } = await execAsync(

@@ -1,96 +1,51 @@
 // loggerMiddleware.js
-import chalk from "chalk";
+import pino from 'pino';
+import config from '../config/config.js';
 
-// 获取调用堆栈中的文件和行号
-function getCallerInfo() {
-    const obj = {};
-    Error.captureStackTrace(obj, getCallerInfo);
-    const stack = obj.stack.split("\n")[3]; // 第4行是调用点
-    const match = stack.match(/\((.*):(\d+)\)/);
-    if (match) {
-        const filePath = match[1];
-        const line = match[2];
-        return `${filePath.replace(process.cwd(), "")}:${line}`;
-    }
-    return "unknown";
-}
-
-class Logger {
-    constructor(level = "debug") {
-        this.level = level;
-
-        this.levels = {
-            debug: { priority: 0, color: chalk.green.bold },
-            info: { priority: 1, color: chalk.rgb(41, 115, 218).bold },
-            warn: { priority: 2, color: chalk.yellow.bold },
-            error: { priority: 3, color: chalk.rgb(255, 0, 0).bold },
-        };
-    }
-
-    shouldLog(level) {
-        const currentPriority = this.levels[this.level]?.priority ?? 0;
-
-        if (this.level === "debug") return true;
-        if (this.level === "warn" && ["info", "warn", "error"].includes(level)) return true;
-        if (this.level === "info" && ["info", "error"].includes(level)) return true;
-
-        return false;
-    }
-
-    formatTime() {
-        return new Date().toISOString().replace("T", " ").split(".")[0];
-    }
-
-    log(level, ...args) {
-        if (!this.shouldLog(level)) return;
-
-        const { color } = this.levels[level] || ((msg) => msg);
-        const timestamp = chalk.gray(this.formatTime());
-        const paddedLevel = `[${level.toUpperCase().padEnd(5)}]`;
-        const levelTag = color(paddedLevel);
-
-        // 格式化参数，将对象转换为 JSON 字符串
-        const formattedArgs = args.map(arg => {
-            if (typeof arg === 'object' && arg !== null) {
-                try {
-                    return JSON.stringify(arg);
-                } catch (e) {
-                    return String(arg);
-                }
-            }
-            return String(arg);
-        });
-
-        let message = `${timestamp} | ${levelTag} | ${formattedArgs.join(" ")}`;
-        if (level === "error" && this.level === "debug") {
-            const caller = chalk.cyan(getCallerInfo());
-            message += ` | ${caller}`;
+// Create Pino logger instance
+const logger = pino({
+    level: process.env.LOG_LEVEL || (config.app.env === 'production' ? 'info' : 'debug'),
+    transport: config.app.env !== 'production' ? {
+        target: 'pino-pretty',
+        options: {
+            colorize: true,
+            translateTime: 'HH:MM:ss',
+            ignore: 'pid,hostname',
+            singleLine: true,
         }
+    } : undefined,
+});
 
-        console.log(message);
-    }
-
-    debug(...args) {
-        this.log("debug", ...args);
-    }
-
-    info(...args) {
-        this.log("info", ...args);
-    }
-
-    warn(...args) {
-        this.log("warn", ...args);
-    }
-
-    error(...args) {
-        this.log("error", ...args);
-    }
-}
-
-const logger = new Logger(process.env.LOG_LEVEL || "debug");
-
+// HTTP request logger middleware
 export function loggerMiddleware(req, res, next) {
-    logger.info(`${req.method} ${req.url}`);
+    const start = Date.now();
+
+    // Log request
+    logger.info({
+        method: req.method,
+        url: req.url,
+        ip: req.ip,
+    }, `${req.method} ${req.url}`);
+
+    // Listen for response completion
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        const logData = {
+            method: req.method,
+            url: req.url,
+            status: res.statusCode,
+            duration: `${duration}ms`,
+        };
+
+        if (res.statusCode >= 500) {
+            logger.error(logData, `${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
+        } else if (res.statusCode >= 400) {
+            logger.warn(logData, `${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
+        } else {
+            logger.info(logData, `${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
+        }
+    });
+
     next();
 }
 
