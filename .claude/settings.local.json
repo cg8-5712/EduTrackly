@@ -10,7 +10,8 @@
       "Bash(npm outdated)",
       "Bash(git check-ignore:*)",
       "Bash(node:*)",
-      "Bash(npm --version)"
+      "Bash(npm --version)",
+      "Bash(npm install --save-dev eslint @eslint/js globals jest supertest)"
     ],
     "deny": [],
     "ask": []
