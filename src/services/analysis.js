@@ -1,18 +1,18 @@
 import db from '../utils/db/db_connector.js';
-import logger from "../middleware/loggerMiddleware.js";
-import {ClassErrors} from "../config/errorCodes.js";
-import { formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate} from "../utils/dateUtils.js";
+import logger from '../middleware/loggerMiddleware.js';
+import {ClassErrors} from '../config/errorCodes.js';
+import { formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate} from '../utils/dateUtils.js';
 
 export async function getTodayAnalysis(cid, date) {
 
-    const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
-    if (studentRes.rows.length === 0) {
-        logger.warn(`CID ${cid} does not exist in class table`);
-        throw ClassErrors.NOT_FOUND; // Throw corresponding error object
-    }
+  const studentRes = await db.query('SELECT 1 FROM class WHERE cid = $1 LIMIT 1', [cid]);
+  if (studentRes.rows.length === 0) {
+    logger.warn(`CID ${cid} does not exist in class table`);
+    throw ClassErrors.NOT_FOUND; // Throw corresponding error object
+  }
 
-    const result = await db.query(
-        `
+  const result = await db.query(
+    `
             WITH class_info AS (
                 SELECT c.cid, c.class_name
                 FROM class c
@@ -72,71 +72,71 @@ export async function getTodayAnalysis(cid, date) {
                      LEFT JOIN events ev ON true
             GROUP BY ci.cid, ci.class_name, e.expected_attend, ec.official_cnt, ec.personal_cnt, ec.sick_cnt, ec.temp_cnt;
         `,
-        [cid, date]
-    );
+    [cid, date]
+  );
 
-    return {
-        code: 0,
-        message: 'Get today analysis successfully',
-        data: result.rows[0],
-        timestamp: Date.now(),
-    };
+  return {
+    code: 0,
+    message: 'Get today analysis successfully',
+    data: result.rows[0],
+    timestamp: Date.now(),
+  };
 }
 
 export async function getClassAnalysis(cid, startDate, endDate) {
 
-    const studentRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
-    if (studentRes.rows.length === 0) {
-        logger.warn(`CID ${cid} does not exist in class table`);
-        throw ClassErrors.NOT_FOUND; // Throw corresponding error object
-    }
+  const studentRes = await db.query('SELECT 1 FROM class WHERE cid = $1 LIMIT 1', [cid]);
+  if (studentRes.rows.length === 0) {
+    logger.warn(`CID ${cid} does not exist in class table`);
+    throw ClassErrors.NOT_FOUND; // Throw corresponding error object
+  }
 
-    // Date rule handling
-    let actualStartDate = startDate;
-    let actualEndDate = endDate;
+  // Date rule handling
+  let actualStartDate = startDate;
+  let actualEndDate = endDate;
 
-    // If only endDate is provided, it's invalid and will be ignored
-    if (!startDate && endDate) {
-        actualStartDate = null;
-        actualEndDate = null;
-    }
+  // If only endDate is provided, it's invalid and will be ignored
+  if (!startDate && endDate) {
+    actualStartDate = null;
+    actualEndDate = null;
+  }
 
-    // If no dates are provided, default to the last 15 days
-    if (!actualStartDate && !actualEndDate) {
-        actualEndDate = formatDatefromyyyymmddtopsqldate(
-            new Date().toISOString().split('T')[0].replace(/-/g, '')
-        );
-        const fifteenDaysAgo = new Date();
-        fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
-        actualStartDate = formatDatefromyyyymmddtopsqldate(
-            fifteenDaysAgo.toISOString().split('T')[0].replace(/-/g, '')
-        );
-    }
+  // If no dates are provided, default to the last 15 days
+  if (!actualStartDate && !actualEndDate) {
+    actualEndDate = formatDatefromyyyymmddtopsqldate(
+      new Date().toISOString().split('T')[0].replace(/-/g, '')
+    );
+    const fifteenDaysAgo = new Date();
+    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+    actualStartDate = formatDatefromyyyymmddtopsqldate(
+      fifteenDaysAgo.toISOString().split('T')[0].replace(/-/g, '')
+    );
+  }
 
-    // If only startDate is provided, endDate defaults to current date
-    if (actualStartDate && !actualEndDate) {
-        actualEndDate = formatDatefromyyyymmddtopsqldate(
-            new Date().toISOString().split('T')[0].replace(/-/g, '')
-        );
-    }
+  // If only startDate is provided, endDate defaults to current date
+  if (actualStartDate && !actualEndDate) {
+    actualEndDate = formatDatefromyyyymmddtopsqldate(
+      new Date().toISOString().split('T')[0].replace(/-/g, '')
+    );
+  }
 
-    const params = [cid];
-    let dateRangeQuery = '';
+  const params = [cid];
+  let dateRangeQuery = '';
 
-    if (actualStartDate && actualEndDate) {
-        params.push(actualStartDate, actualEndDate);
-        dateRangeQuery = `
+  if (actualStartDate && actualEndDate) {
+    params.push(actualStartDate, actualEndDate);
+    dateRangeQuery = `
         date_range AS (
           SELECT generate_series($2::date, $3::date, '1 day'::interval)::date AS event_date
         ),`;
-    } else {
-        dateRangeQuery = `
+  } else {
+    dateRangeQuery = `
         date_range AS (
           SELECT NULL::date AS event_date WHERE false
         ),`;
-    }
+  }
 
-    const sql = `
+  const sql = `
     WITH class_info AS (
       SELECT c.cid, c.class_name
       FROM class c
@@ -201,18 +201,18 @@ export async function getClassAnalysis(cid, startDate, endDate) {
     GROUP BY ci.cid, ci.class_name, si.expected_attend, si.student_num, ta.today_absent_cnt, ta.today_temp_cnt
   `;
 
-    const result = await db.query(sql, params);
-    const row = result.rows[0];
+  const result = await db.query(sql, params);
+  const row = result.rows[0];
 
-    // Format date as YYYYMMDD
-    if (row.daily_attendance_rates && row.daily_attendance_rates.length > 0) {
-        row.daily_attendance_rates = row.daily_attendance_rates.map(item => ({
-            date: formatDatefromsqldatetoyyyymmdd(item.date),
-            attendance_rate: parseFloat(item.attendance_rate)
-        }));
-    }
+  // Format date as YYYYMMDD
+  if (row.daily_attendance_rates && row.daily_attendance_rates.length > 0) {
+    row.daily_attendance_rates = row.daily_attendance_rates.map(item => ({
+      date: formatDatefromsqldatetoyyyymmdd(item.date),
+      attendance_rate: parseFloat(item.attendance_rate)
+    }));
+  }
 
-    return row;
+  return row;
 }
 
 /**
@@ -226,52 +226,52 @@ export async function getClassAnalysis(cid, startDate, endDate) {
  * - Both provided, use the specified range
  */
 export async function getStudentsAnalysis({ sid, startDate, endDate }) {
-    // sid is a required parameter
-    if (sid === undefined || sid === null || sid === "") {
-        logger.warn('SID is required but not provided');
-        throw ClassErrors.NOT_FOUND;
-    }
+  // sid is a required parameter
+  if (sid === undefined || sid === null || sid === '') {
+    logger.warn('SID is required but not provided');
+    throw ClassErrors.NOT_FOUND;
+  }
 
-    // Check if student exists
-    const studentRes = await db.query(`SELECT 1 FROM student WHERE sid = $1 LIMIT 1`, [sid]);
-    if (studentRes.rows.length === 0) {
-        logger.warn(`SID ${sid} does not exist`);
-        throw ClassErrors.NOT_FOUND;
-    }
+  // Check if student exists
+  const studentRes = await db.query('SELECT 1 FROM student WHERE sid = $1 LIMIT 1', [sid]);
+  if (studentRes.rows.length === 0) {
+    logger.warn(`SID ${sid} does not exist`);
+    throw ClassErrors.NOT_FOUND;
+  }
 
-    const params = [parseInt(sid, 10)];
-    let idx = 2;
+  const params = [parseInt(sid, 10)];
+  let idx = 2;
 
-    let whereClause = "WHERE s.sid = $1";
+  let whereClause = 'WHERE s.sid = $1';
 
-    // Apply date rules
-    let actualStartDate = startDate;
-    let actualEndDate = endDate;
+  // Apply date rules
+  let actualStartDate = startDate;
+  let actualEndDate = endDate;
 
-    // If only endDate is provided, it's invalid and will be ignored
-    if (!startDate && endDate) {
-        actualStartDate = null;
-        actualEndDate = null;
-    }
+  // If only endDate is provided, it's invalid and will be ignored
+  if (!startDate && endDate) {
+    actualStartDate = null;
+    actualEndDate = null;
+  }
 
-    // If only startDate is provided, endDate defaults to current date
-    if (actualStartDate && !actualEndDate) {
-        actualEndDate = formatDatefromyyyymmddtopsqldate(
-            new Date().toISOString().split('T')[0].replace(/-/g, '')
-        );
-    }
+  // If only startDate is provided, endDate defaults to current date
+  if (actualStartDate && !actualEndDate) {
+    actualEndDate = formatDatefromyyyymmddtopsqldate(
+      new Date().toISOString().split('T')[0].replace(/-/g, '')
+    );
+  }
 
-    if (actualStartDate !== undefined && actualStartDate !== null && actualStartDate !== "") {
-        whereClause += ` AND a.event_date >= $${idx++}`;
-        params.push(actualStartDate);
-    }
+  if (actualStartDate !== undefined && actualStartDate !== null && actualStartDate !== '') {
+    whereClause += ` AND a.event_date >= $${idx++}`;
+    params.push(actualStartDate);
+  }
 
-    if (actualEndDate !== undefined && actualEndDate !== null && actualEndDate !== "") {
-        whereClause += ` AND a.event_date <= $${idx++}`;
-        params.push(actualEndDate);
-    }
+  if (actualEndDate !== undefined && actualEndDate !== null && actualEndDate !== '') {
+    whereClause += ` AND a.event_date <= $${idx++}`;
+    params.push(actualEndDate);
+  }
 
-    const query = `
+  const query = `
         SELECT
             s.sid,
             s.student_name,
@@ -291,24 +291,24 @@ export async function getStudentsAnalysis({ sid, startDate, endDate }) {
         ORDER BY s.sid ASC
     `;
 
-    const result = await db.query(query, params);
+  const result = await db.query(query, params);
 
-    const r = result.rows[0];
-    return {
-        sid: r.sid,
-        student_name: r.student_name,
-        attendance: r.attendance,
-        event_time: {
-            official_cnt: parseInt(r.official_cnt, 10),
-            personal_cnt: parseInt(r.personal_cnt, 10),
-            sick_cnt: parseInt(r.sick_cnt, 10),
-            temp_cnt: parseInt(r.temp_cnt, 10)
-        },
-        event_list: {
-            official_list: r.official_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
-            personal_list: r.personal_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
-            sick_list: r.sick_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
-            temp_list: r.temp_list.map(d => formatDatefromsqldatetoyyyymmdd(d))
-        }
-    };
+  const r = result.rows[0];
+  return {
+    sid: r.sid,
+    student_name: r.student_name,
+    attendance: r.attendance,
+    event_time: {
+      official_cnt: parseInt(r.official_cnt, 10),
+      personal_cnt: parseInt(r.personal_cnt, 10),
+      sick_cnt: parseInt(r.sick_cnt, 10),
+      temp_cnt: parseInt(r.temp_cnt, 10)
+    },
+    event_list: {
+      official_list: r.official_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
+      personal_list: r.personal_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
+      sick_list: r.sick_list.map(d => formatDatefromsqldatetoyyyymmdd(d)),
+      temp_list: r.temp_list.map(d => formatDatefromsqldatetoyyyymmdd(d))
+    }
+  };
 }

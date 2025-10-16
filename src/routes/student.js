@@ -1,10 +1,10 @@
 import express from 'express';
 import { addStudentsController,
-         getStudentController,
-         getStudentlistController,
-         attendanceChangeController,
-         deleteStudentController,
-         putStudentEventController } from '../controllers/studentController.js';
+  getStudentController,
+  getStudentlistController,
+  attendanceChangeController,
+  deleteStudentController,
+  putStudentEventController } from '../controllers/studentController.js';
 import jwtRequire from '../middleware/jwt_require.js';
 const router = express.Router();
 

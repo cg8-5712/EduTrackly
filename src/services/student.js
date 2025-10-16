@@ -1,8 +1,8 @@
 import db from '../utils/db/db_connector.js';
 import logger from '../middleware/loggerMiddleware.js';
 import { StudentErrors, ParamsErrors, ClassErrors } from '../config/errorCodes.js';
-import { formatDatefromsqldatetoyyyymmdd} from "../utils/dateUtils.js";
-import * as pagination from "../utils/pagination.js";
+import { formatDatefromsqldatetoyyyymmdd} from '../utils/dateUtils.js';
+import * as pagination from '../utils/pagination.js';
 
 /**
  * Add students
@@ -10,40 +10,40 @@ import * as pagination from "../utils/pagination.js";
  */
 
 export async function addStudents(students) {
-    if (!Array.isArray(students) || students.length === 0) {
-        throw ParamsErrors.REQUIRE_STUDENTS_ARRAY;
-    }
+  if (!Array.isArray(students) || students.length === 0) {
+    throw ParamsErrors.REQUIRE_STUDENTS_ARRAY;
+  }
 
-    const query = `
+  const query = `
         INSERT INTO student (cid, student_name, attendance)
         VALUES ($1, $2, $3)
         RETURNING sid, cid, student_name, attendance
     `;
 
-    const results = [];
-    for (const stu of students) {
-        if (!stu.cid) {
-            logger.error('addStudents: cid is required for each student');
-            throw ParamsErrors.REQUIRE_CID;
-        }
-
-        // Check if class exists
-        const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [stu.cid]);
-        if (classRes.rows.length === 0) {
-            logger.warn(`CID ${stu.cid} does not exist`);
-            throw ClassErrors.NOT_FOUND;
-        }
-
-        if (!stu.student_name) {
-            throw ParamsErrors.REQUIRE_STUDENT_NAME;
-        }
-
-        const attendance = stu.attendance === undefined ? true : stu.attendance;
-
-        const res = await db.query(query, [stu.cid, stu.student_name, attendance]);
-        results.push(res.rows[0]);
+  const results = [];
+  for (const stu of students) {
+    if (!stu.cid) {
+      logger.error('addStudents: cid is required for each student');
+      throw ParamsErrors.REQUIRE_CID;
     }
-    return results;
+
+    // Check if class exists
+    const classRes = await db.query('SELECT 1 FROM class WHERE cid = $1 LIMIT 1', [stu.cid]);
+    if (classRes.rows.length === 0) {
+      logger.warn(`CID ${stu.cid} does not exist`);
+      throw ClassErrors.NOT_FOUND;
+    }
+
+    if (!stu.student_name) {
+      throw ParamsErrors.REQUIRE_STUDENT_NAME;
+    }
+
+    const attendance = stu.attendance === undefined ? true : stu.attendance;
+
+    const res = await db.query(query, [stu.cid, stu.student_name, attendance]);
+    results.push(res.rows[0]);
+  }
+  return results;
 
 }
 
@@ -54,94 +54,94 @@ export async function addStudents(students) {
  * @returns {Promise<object>} Student and their events
  */
 export async function getStudent(sid, student_name) {
-    if (!sid && !student_name) {
-        logger.error("getStudent: sid or student_name required");
-        throw ParamsErrors.REQUIRE_STUDENT_NAME_OR_ID;
-    }
+  if (!sid && !student_name) {
+    logger.error('getStudent: sid or student_name required');
+    throw ParamsErrors.REQUIRE_STUDENT_NAME_OR_ID;
+  }
 
-    let studentQuery = `
+  let studentQuery = `
         SELECT sid, cid, student_name, attendance
         FROM student
         WHERE 1=1
     `;
-    const params = [];
-    let idx = 1;
+  const params = [];
+  let idx = 1;
 
-    if (sid) {
-        studentQuery += ` AND sid = $${idx++}`;
-        params.push(sid);
-    }
-    if (student_name) {
-        studentQuery += ` AND student_name = $${idx++}`;
-        params.push(student_name);
-    }
+  if (sid) {
+    studentQuery += ` AND sid = $${idx++}`;
+    params.push(sid);
+  }
+  if (student_name) {
+    studentQuery += ` AND student_name = $${idx++}`;
+    params.push(student_name);
+  }
 
-    const studentRes = await db.query(studentQuery, params);
-    if (studentRes.rowCount === 0) {
-        throw StudentErrors.NOT_FOUND;
-    }
+  const studentRes = await db.query(studentQuery, params);
+  if (studentRes.rowCount === 0) {
+    throw StudentErrors.NOT_FOUND;
+  }
 
-    const student = studentRes.rows[0];
+  const student = studentRes.rows[0];
 
-    // Query student events
-    const eventQuery = `
+  // Query student events
+  const eventQuery = `
         SELECT event_date, event_type
         FROM attendance
         WHERE sid = $1
         ORDER BY event_date DESC
     `;
-    const eventRes = await db.query(eventQuery, [student.sid]);
+  const eventRes = await db.query(eventQuery, [student.sid]);
 
-    // Format dates
-    const events = (eventRes.rows || []).map(ev => ({
-        ...ev,
-        event_date: formatDatefromsqldatetoyyyymmdd(ev.event_date)
-    }));
+  // Format dates
+  const events = (eventRes.rows || []).map(ev => ({
+    ...ev,
+    event_date: formatDatefromsqldatetoyyyymmdd(ev.event_date)
+  }));
 
-    return {
-        ...student,
-        event: events
-    };
+  return {
+    ...student,
+    event: events
+  };
 }
 
 export async function listStudents({ cid, page, size }) {
-    const { offset } = pagination.getPagination(page, size);
+  const { offset } = pagination.getPagination(page, size);
 
-    let whereClause = "";
-    const params = [];
+  let whereClause = '';
+  const params = [];
 
-    if (cid) {
-        // Check if class exists
-        const classRes = await db.query(`SELECT 1 FROM class WHERE cid = $1 LIMIT 1`, [cid]);
-        if (classRes.rows.length === 0) {
-            logger.warn(`CID ${cid} does not exist`);
-            throw ClassErrors.NOT_FOUND;
-        }
-
-        whereClause = "WHERE cid = $1";
-        params.push(cid);
+  if (cid) {
+    // Check if class exists
+    const classRes = await db.query('SELECT 1 FROM class WHERE cid = $1 LIMIT 1', [cid]);
+    if (classRes.rows.length === 0) {
+      logger.warn(`CID ${cid} does not exist`);
+      throw ClassErrors.NOT_FOUND;
     }
 
-    // Query total count
-    const totalResult = await db.query(
-        `SELECT COUNT(*) AS count FROM student ${whereClause}`,
-        params
-    );
-    const total = parseInt(totalResult.rows[0].count, 10);
+    whereClause = 'WHERE cid = $1';
+    params.push(cid);
+  }
 
-    // Query paginated data
-    const rowsResult = await db.query(
-        `SELECT cid, sid, student_name, attendance
+  // Query total count
+  const totalResult = await db.query(
+    `SELECT COUNT(*) AS count FROM student ${whereClause}`,
+    params
+  );
+  const total = parseInt(totalResult.rows[0].count, 10);
+
+  // Query paginated data
+  const rowsResult = await db.query(
+    `SELECT cid, sid, student_name, attendance
          FROM student
          ${whereClause}
          ORDER BY sid ASC
          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-        [...params, size, offset]
-    );
+    [...params, size, offset]
+  );
 
-    logger.debug(`listStudents: ${rowsResult.rows.length} rows returned`);
+  logger.debug(`listStudents: ${rowsResult.rows.length} rows returned`);
 
-    return pagination.getPagingData(rowsResult.rows, total, parseInt(page), parseInt(size));
+  return pagination.getPagingData(rowsResult.rows, total, parseInt(page), parseInt(size));
 }
 
 /**
@@ -151,14 +151,14 @@ export async function listStudents({ cid, page, size }) {
  * @returns {Promise<boolean>} Whether successful
  */
 export async function changeAttendance(sid, attendance) {
-    const result = await db.query(
-        `UPDATE student
+  const result = await db.query(
+    `UPDATE student
          SET attendance = $1
          WHERE sid = $2
          RETURNING sid`,
-        [attendance, sid]
-    );
-    return result.rowCount > 0;
+    [attendance, sid]
+  );
+  return result.rowCount > 0;
 }
 
 /**
@@ -168,67 +168,67 @@ export async function changeAttendance(sid, attendance) {
  * @returns {Promise<object>} Operation result
  */
 export async function putStudentEvents(events, date = null) {
-    if (!Array.isArray(events) || events.length === 0) {
-        throw ErrorCodes.ParamsErrors.REQUIRE_BODY;
+  if (!Array.isArray(events) || events.length === 0) {
+    throw ErrorCodes.ParamsErrors.REQUIRE_BODY;
+  }
+
+  // Determine the date value to use
+  const targetDate = date || 'CURRENT_DATE';
+  const isCurrentDate = !date;
+
+  const insertValues = [];
+  const insertParams = [];
+  const deleteSids = [];
+
+  events.forEach((event, i) => {
+    if (!event.sid) {
+      throw ParamsErrors.REQUIRE_STUDENT_ID;
     }
 
-    // Determine the date value to use
-    const targetDate = date || 'CURRENT_DATE';
-    const isCurrentDate = !date;
+    if (!event.event_type) {
+      // If event_type is empty, record the sid for deletion
+      deleteSids.push(event.sid);
+      return;
+    }
 
-    const insertValues = [];
-    const insertParams = [];
-    const deleteSids = [];
+    const allowed = ['official', 'personal', 'sick', 'temp'];
+    if (!allowed.includes(event.event_type)) {
+      throw ParamsErrors.ILLEGAL_EVENT_TYPE;
+    }
 
-    events.forEach((event, i) => {
-        if (!event.sid) {
-            throw ParamsErrors.REQUIRE_STUDENT_ID;
-        }
+    insertParams.push(event.sid, event.event_type);
+    const offset = insertParams.length - 1; // Each event takes two parameters
+    insertValues.push(`($${offset}, ${isCurrentDate ? 'CURRENT_DATE' : `'${targetDate}'`}, $${offset + 1})`);
+  });
 
-        if (!event.event_type) {
-            // If event_type is empty, record the sid for deletion
-            deleteSids.push(event.sid);
-            return;
-        }
-
-        const allowed = ["official", "personal", "sick", "temp"];
-        if (!allowed.includes(event.event_type)) {
-            throw ParamsErrors.ILLEGAL_EVENT_TYPE;
-        }
-
-        insertParams.push(event.sid, event.event_type);
-        const offset = insertParams.length - 1; // Each event takes two parameters
-        insertValues.push(`($${offset}, ${isCurrentDate ? 'CURRENT_DATE' : `'${targetDate}'`}, $${offset + 1})`);
-    });
-
-    // First delete records for specified sids on the specified date
-    if (deleteSids.length > 0) {
-        const deleteQuery = `
+  // First delete records for specified sids on the specified date
+  if (deleteSids.length > 0) {
+    const deleteQuery = `
             DELETE FROM attendance
             WHERE event_date = ${isCurrentDate ? 'CURRENT_DATE' : `'${targetDate}'`}
               AND sid = ANY($1)
         `;
-        await db.query(deleteQuery, [deleteSids]);
-        logger.debug(`Deleted attendance for date ${targetDate} and SIDs: ${deleteSids}`);
-    }
+    await db.query(deleteQuery, [deleteSids]);
+    logger.debug(`Deleted attendance for date ${targetDate} and SIDs: ${deleteSids}`);
+  }
 
-    // Insert or update
-    if (insertValues.length > 0) {
-        const insertQuery = `
+  // Insert or update
+  if (insertValues.length > 0) {
+    const insertQuery = `
             INSERT INTO attendance (sid, event_date, event_type)
-            VALUES ${insertValues.join(", ")}
+            VALUES ${insertValues.join(', ')}
             ON CONFLICT (sid, event_date)
             DO UPDATE SET event_type = EXCLUDED.event_type
         `;
-        logger.debug(`Inserting/updating attendance for date ${targetDate}: ${insertQuery} with params ${insertParams}`);
-        await db.query(insertQuery, insertParams);
-    }
+    logger.debug(`Inserting/updating attendance for date ${targetDate}: ${insertQuery} with params ${insertParams}`);
+    await db.query(insertQuery, insertParams);
+  }
 
-    return {
-        code: 0,
-        message: "Student events recorded successfully",
-        timestamp: Date.now()
-    };
+  return {
+    code: 0,
+    message: 'Student events recorded successfully',
+    timestamp: Date.now()
+  };
 }
 
 
@@ -237,14 +237,14 @@ export async function putStudentEvents(events, date = null) {
  * @param {number} sid Student ID
  */
 export async function deleteStudent(sid) {
-    const result = await db.query(
-        `DELETE FROM student WHERE sid = $1 RETURNING sid`,
-        [sid]
-    );
+  const result = await db.query(
+    'DELETE FROM student WHERE sid = $1 RETURNING sid',
+    [sid]
+  );
 
-    if (result.rowCount === 0) {
-        throw StudentErrors.NOT_FOUND; // Student not found
-    }
+  if (result.rowCount === 0) {
+    throw StudentErrors.NOT_FOUND; // Student not found
+  }
 
-    return true;
+  return true;
 }

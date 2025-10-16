@@ -1,6 +1,6 @@
-import express from "express";
-import configureExpress from "./src/config/express.js";
-import config from "./src/config/config.js";
+import express from 'express';
+import configureExpress from './src/config/express.js';
+import config from './src/config/config.js';
 
 const routes = [
   { path: 'homework', route: import('./src/routes/homework.js') },

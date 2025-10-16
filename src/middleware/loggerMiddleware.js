@@ -4,49 +4,68 @@ import config from '../config/config.js';
 
 // Create Pino logger instance
 const logger = pino({
-    level: process.env.LOG_LEVEL || (config.app.env === 'production' ? 'info' : 'debug'),
-    transport: config.app.env !== 'production' ? {
-        target: 'pino-pretty',
-        options: {
-            colorize: true,
-            translateTime: 'HH:MM:ss',
-            ignore: 'pid,hostname',
-            singleLine: true,
-        }
-    } : undefined,
+  level: process.env.LOG_LEVEL || (config.app.env === 'production' ? 'info' : 'debug'),
+  transport: config.app.env !== 'production' ? {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'HH:MM:ss',
+      ignore: 'pid,hostname',
+      singleLine: false,
+      messageFormat: '{msg}',
+    }
+  } : undefined,
+  // Ensure proper serialization of errors
+  serializers: {
+    err: pino.stdSerializers.err,
+    error: pino.stdSerializers.err,
+    req: pino.stdSerializers.req,
+    res: pino.stdSerializers.res,
+  },
+  // Format output
+  formatters: {
+    level: (label) => {
+      return { level: label };
+    },
+  },
 });
 
 // HTTP request logger middleware
 export function loggerMiddleware(req, res, next) {
-    const start = Date.now();
+  const start = Date.now();
 
-    // Log request
-    logger.info({
-        method: req.method,
-        url: req.url,
-        ip: req.ip,
-    }, `${req.method} ${req.url}`);
+  // Log request
+  logger.info({
+    type: 'request',
+    method: req.method,
+    url: req.url,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+  }, `→ ${req.method} ${req.url}`);
 
-    // Listen for response completion
-    res.on('finish', () => {
-        const duration = Date.now() - start;
-        const logData = {
-            method: req.method,
-            url: req.url,
-            status: res.statusCode,
-            duration: `${duration}ms`,
-        };
+  // Listen for response completion
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const logData = {
+      type: 'response',
+      method: req.method,
+      url: req.url,
+      status: res.statusCode,
+      durationMs: duration,
+      duration: `${duration}ms`,
+      ip: req.ip,
+    };
 
-        if (res.statusCode >= 500) {
-            logger.error(logData, `${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
-        } else if (res.statusCode >= 400) {
-            logger.warn(logData, `${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
-        } else {
-            logger.info(logData, `${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
-        }
-    });
+    if (res.statusCode >= 500) {
+      logger.error(logData, `← ${req.method} ${req.url} ${res.statusCode} (${duration}ms)`);
+    } else if (res.statusCode >= 400) {
+      logger.warn(logData, `← ${req.method} ${req.url} ${res.statusCode} (${duration}ms)`);
+    } else {
+      logger.info(logData, `← ${req.method} ${req.url} ${res.statusCode} (${duration}ms)`);
+    }
+  });
 
-    next();
+  next();
 }
 
 export default logger;
