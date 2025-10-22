@@ -13,7 +13,7 @@ CREATE SEQUENCE IF NOT EXISTS admin_aid_seq START WITH 1;
 
 CREATE TABLE admin (
                        aid INTEGER PRIMARY KEY DEFAULT nextval('admin_aid_seq'),
-                       password VARCHAR(255) NOT NULL,
+                       password VARCHAR(60) NOT NULL,  -- bcrypt hash is 60 characters
                        time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        ip VARCHAR(45)
 );

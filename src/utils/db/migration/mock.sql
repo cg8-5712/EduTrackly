@@ -2,10 +2,12 @@
 -- Seed data for EduTrackly
 -- =================================
 
--- Admin
+-- Admin (passwords are hashed with bcrypt)
+-- Password for admin 1: test123456
+-- Password for admin 2: admin_password2
 INSERT INTO admin (password, ip) VALUES
-                                     ('test123456', '192.168.1.1'),
-                                     ('admin_password2', '192.168.1.2');
+                                     ('$2b$10$JQCr.iYeaOLnSSp1JqElx.Afc0CjwnBwv9mVH5BFLbGp/ZHRtvcp2', '192.168.1.1'),
+                                     ('$2b$10$mQ4MHQBO7EPifW4NBM6ay.H4JqBTUIlyw8oQQTCtyPR365QMqcsRC', '192.168.1.2');
 
 -- Class
 INSERT INTO class (class_name) VALUES

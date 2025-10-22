@@ -1,12 +1,13 @@
 // src/services/auth.js
 import db from '../utils/db/db_connector.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import config from '../config/config.js';
 import logger from '../middleware/loggerMiddleware.js';
 
 /**
  * User authentication
- * @param {string} password - Input password
+ * @param {string} password - Input password (plaintext)
  * @param {string} ip - IP address of the login request
  * @returns {Object|null} - Login result or null
  */
@@ -19,9 +20,12 @@ export async function authenticateUser(password, ip) {
     return null; // No accounts found
   }
 
-  // Iterate through all accounts, check if password matches
+  // Iterate through all accounts, check if password matches using bcrypt
   for (const admin of result.rows) {
-    if (password === admin.password) {
+    // Use bcrypt.compare to check password against hash
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+
+    if (isPasswordValid) {
       // Generate JWT
       const expiresIn = parseInt(config.jwt.expires) || 3600; // Default 1 hour
       const token = jwt.sign({ aid: admin.aid }, config.jwt.secret, { expiresIn });
@@ -51,4 +55,14 @@ export async function authenticateUser(password, ip) {
   }
 
   return null; // No matching password
+}
+
+/**
+ * Hash password using bcrypt
+ * @param {string} plainPassword - Plain text password
+ * @returns {Promise<string>} - Hashed password
+ */
+export async function hashPassword(plainPassword) {
+  const saltRounds = 10; // Industry standard
+  return await bcrypt.hash(plainPassword, saltRounds);
 }
