@@ -99,7 +99,7 @@ function displayBanner() {
   console.log(chalk.cyan('║') + chalk.white('  📚 Project:  ') + chalk.green.bold('EduTrackly                                      ') + chalk.cyan('║'));
   console.log(chalk.cyan('║') + chalk.white('  🏷️  Version:  ') + chalk.green.bold('v1.9.1                                          ') + chalk.cyan('║'));
   console.log(chalk.cyan('║') + chalk.white('  👤 Author:   ') + chalk.green.bold('Cg8-5712                                        ') + chalk.cyan('║'));
-  console.log(chalk.cyan('║') + chalk.white('  🕐 Started:  ') + chalk.green.bold(new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) + '                           ') + chalk.cyan('║'));
+  console.log(chalk.cyan('║') + chalk.white('  🕐 Started:  ') + chalk.green.bold(new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) + '                             ') + chalk.cyan('║'));
   console.log(chalk.cyan('╚═══════════════════════════════════════════════════════════════╝'));
   console.log('\n');
 }
