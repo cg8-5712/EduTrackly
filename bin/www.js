@@ -96,10 +96,10 @@ function displayBanner() {
   console.log(chalk.cyan('║') + chalk.yellow.bold('   |_____|_____\\__,_|_||_|  \\__,_|\\___|_|\\_\\_|\\__,|            ') + chalk.cyan('║'));
   console.log(chalk.cyan('║') + chalk.yellow.bold('                                             |___/             ') + chalk.cyan('║'));
   console.log(chalk.cyan('╠═══════════════════════════════════════════════════════════════╣'));
-  console.log(chalk.cyan('║') + chalk.white('  📚 Project:  ') + chalk.green.bold('EduTrackly                                       ') + chalk.cyan('║'));
+  console.log(chalk.cyan('║') + chalk.white('  📚 Project:  ') + chalk.green.bold('EduTrackly                                      ') + chalk.cyan('║'));
   console.log(chalk.cyan('║') + chalk.white('  🏷️  Version:  ') + chalk.green.bold('v1.9.1                                          ') + chalk.cyan('║'));
-  console.log(chalk.cyan('║') + chalk.white('  👤 Author:   ') + chalk.green.bold('Cg8-5712                                         ') + chalk.cyan('║'));
-  console.log(chalk.cyan('║') + chalk.white('  ���� Started:  ') + chalk.green.bold(new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) + '                            ') + chalk.cyan('║'));
+  console.log(chalk.cyan('║') + chalk.white('  👤 Author:   ') + chalk.green.bold('Cg8-5712                                        ') + chalk.cyan('║'));
+  console.log(chalk.cyan('║') + chalk.white('  🕐 Started:  ') + chalk.green.bold(new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) + '                           ') + chalk.cyan('║'));
   console.log(chalk.cyan('╚═══════════════════════════════════════════════════════════════╝'));
   console.log('\n');
 }
@@ -118,7 +118,7 @@ async function onListening() {
   logger.info(chalk.blue('🚀 Server Status'));
   logger.info(chalk.green('================================='));
   logger.info(chalk.yellow('Environment:    ') + chalk.white(config.app.env));
-  logger.debug(chalk.yellow('Server:         ') + chalk.white(`http://localhost:${port}`));
+  logger.info(chalk.yellow('Server:         ') + chalk.white(`http://localhost:${port}`));
 
   try {
     await initializeDatabase();
