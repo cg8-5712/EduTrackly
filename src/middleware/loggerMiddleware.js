@@ -5,7 +5,7 @@ import config from '../config/config.js';
 // Create Pino logger instance
 const logger = pino({
   level: process.env.LOG_LEVEL || (config.app.env === 'production' ? 'info' : 'debug'),
-  transport: config.app.env !== 'production' ? {
+  transport: {
     target: 'pino-pretty',
     options: {
       colorize: true,
@@ -14,7 +14,7 @@ const logger = pino({
       singleLine: false,
       messageFormat: '{msg}',
     }
-  } : undefined,
+  },
   // Ensure proper serialization of errors
   serializers: {
     err: pino.stdSerializers.err,
