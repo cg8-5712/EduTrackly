@@ -2,6 +2,7 @@
 import db from './db_connector.js';
 import migrations from './migration.js';
 import logger from '../../middleware/loggerMiddleware.js';
+import config from '../../config/config.js';
 
 export default async function initializeDatabase() {
   logger.info('⏳ Initializing database connection...');
@@ -21,7 +22,14 @@ export default async function initializeDatabase() {
     if (result.rows.length === 0) {
       logger.info('⏳ Running database migrations (first time)...');
       await migrations.runSchema();
-      await migrations.runSeed();
+
+      // Only seed mock data in non-production environments
+      if (config.app.env !== 'production') {
+        await migrations.runSeed();
+      } else {
+        logger.info('⚡ Production mode: skipping mock data seeding');
+      }
+
       logger.info('✅ Database migrations completed');
     } else {
       logger.info('⚡ Database already initialized, skipping migrations');

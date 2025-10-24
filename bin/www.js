@@ -117,8 +117,8 @@ async function onListening() {
   logger.info(chalk.green('================================='));
   logger.info(chalk.blue('🚀 Server Status'));
   logger.info(chalk.green('================================='));
-  logger.info(chalk.yellow('Environment:    '), chalk.white(config.app.env));
-  logger.debug(chalk.yellow('Server:         '), chalk.white(`http://localhost:${port}`));
+  logger.info(chalk.yellow('Environment:    ') + chalk.white(config.app.env));
+  logger.debug(chalk.yellow('Server:         ') + chalk.white(`http://localhost:${port}`));
 
   try {
     await initializeDatabase();
