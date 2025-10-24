@@ -26,10 +26,6 @@ RUN addgroup -g 1001 -S nodejs && \
 
 USER nodejs
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
-  CMD node -e "require('http').get('http://localhost:3000/api/v1/system/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
-
 # 暴露应用的端口
 EXPOSE 3000
 
