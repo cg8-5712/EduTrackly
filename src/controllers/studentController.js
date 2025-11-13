@@ -11,8 +11,6 @@ export async function addStudentsController(req, res) {
   try {
     const students = req.body;
 
-    logger.debug('Received addStudents request', { studentCount: students?.length });
-
     if (!students || !Array.isArray(students)) {
       logger.warn('Invalid or missing students array in request body');
       return res.status(400).json({
@@ -20,6 +18,8 @@ export async function addStudentsController(req, res) {
         timestamp: Date.now()
       });
     }
+
+    logger.debug('Received addStudents request', { studentCount: students.length });
 
     await studentService.addStudents(students);
     logger.info('Students added successfully', { addedCount: students.length });
