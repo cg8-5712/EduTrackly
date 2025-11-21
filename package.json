@@ -5,11 +5,16 @@
   "main": "app.js",
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "cross-env DEBUG=EduTrackly:* nodemon ./bin/www",
+    "dev": "cross-env NODE_ENV=development DEBUG=EduTrackly:* nodemon ./bin/www",
     "debug": "nodemon --inspect ./bin/www",
     "test": "jest",
     "lint": "eslint .",
-    "debuglog": "cross-env DEBUG=EduTrackly:* node ./bin/www"
+    "debuglog": "cross-env DEBUG=EduTrackly:* node ./bin/www",
+    "db:init": "node src/utils/db/init-db.js",
+    "db:init:dev": "cross-env NODE_ENV=development node src/utils/db/init-db.js",
+    "db:init:prod": "cross-env NODE_ENV=production node src/utils/db/init-db.js",
+    "db:migrate-passwords": "node src/utils/db/migration/migrate-passwords.js",
+    "admin:create": "node src/utils/admin/create-admin.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

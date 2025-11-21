@@ -22,6 +22,9 @@ const config = {
   route: {
     prefix: process.env.ROUTE_PREFIX || '/api/v1',
   },
+  webhook: {
+    ip: process.env.WEBHOOK_IP || 'http://localhost:8080',
+  },
 };
 
 export default config;

@@ -2,6 +2,7 @@ import { ClassErrors, HomeworkErrors } from '../config/errorCodes.js';
 import db from '../utils/db/db_connector.js';
 import logger from '../middleware/loggerMiddleware.js';
 import { formatDatefromyyyymmddtopsqldate, formatDatefromsqldatetoyyyymmdd } from '../utils/dateUtils.js';
+import config from '../config/config.js';
 
 /**
  * Get homework by class and date
@@ -190,7 +191,48 @@ export async function createHomework({ cid, homework_content, due_date }) {
   // Note: when storing, maths -> math, others -> other
 
   logger.info(`Homework for class ${cid} on ${sqlDate} created/updated successfully`);
+
+  // Get class name for webhook
+  const classQuery = 'SELECT class_name FROM class WHERE cid = $1 LIMIT 1';
+  const classRes2 = await db.query(classQuery, [cid]);
+  const class_name = classRes2.rows.length > 0 ? classRes2.rows[0].class_name : null;
+
+  // Send webhook notification
+  const webhookData = {
+    cid,
+    class_name,
+    homework_content,
+    due_date: formatDatefromsqldatetoyyyymmdd(sqlDate)
+  };
+
+  await sendWebhookNotification(cid, webhookData);
+
   return { cid, due_date: sqlDate, homework_content };
+}
+
+/**
+ * Send webhook notification for homework
+ */
+async function sendWebhookNotification(cid, homeworkData) {
+  const webhookUrl = `${config.webhook.ip}/webhook/homework/${cid}`;
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(homeworkData),
+    });
+
+    if (!response.ok) {
+      logger.warn(`Webhook notification failed for CID ${cid}: ${response.status} ${response.statusText}`);
+    } else {
+      logger.info(`Webhook notification sent successfully for CID ${cid} to ${webhookUrl}`);
+    }
+  } catch (error) {
+    logger.error(`Failed to send webhook notification for CID ${cid}: ${error.message}`);
+  }
 }
 
 /**
