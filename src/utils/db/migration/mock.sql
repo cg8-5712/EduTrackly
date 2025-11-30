@@ -14,6 +14,11 @@ INSERT INTO class (class_name) VALUES
                                    ('Class1'),
                                    ('Class2');
 
+-- Setting (default settings for each class)
+INSERT INTO setting (cid, is_countdown_display, is_slogan_display) VALUES
+                                                                        (1, true, true),
+                                                                        (2, true, true);
+
 -- Students (cid references class table)
 INSERT INTO student (cid, student_name, attendance) VALUES
                                             (1, 'Alice', true),

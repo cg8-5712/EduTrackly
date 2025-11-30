@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS homework CASCADE;
 DROP TABLE IF EXISTS admin CASCADE;
+DROP TABLE IF EXISTS countdown CASCADE;
+DROP TABLE IF EXISTS setting CASCADE;
 
 -- ================= Admin Table =================
 CREATE SEQUENCE IF NOT EXISTS admin_aid_seq START WITH 1;
@@ -108,3 +110,14 @@ CREATE TABLE countdown (
 );
 
 CREATE INDEX IF NOT EXISTS idx_countdown_cid ON countdown(cid);
+
+-- ================= Setting Table =================
+CREATE TABLE setting (
+    cid INT PRIMARY KEY REFERENCES class(cid) ON DELETE CASCADE,
+    is_countdown_display BOOLEAN NOT NULL DEFAULT true,
+    is_slogan_display BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_setting_cid ON setting(cid);
