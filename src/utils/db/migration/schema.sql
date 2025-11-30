@@ -97,3 +97,14 @@ CREATE INDEX IF NOT EXISTS idx_student_cid ON student(cid);
 CREATE INDEX IF NOT EXISTS idx_student_name ON student(student_name);
 CREATE INDEX IF NOT EXISTS idx_homework_cid ON homework(cid);
 CREATE INDEX IF NOT EXISTS idx_homework_cid_due_date ON homework(cid, due_date);
+
+-- ================= Countdown Table =================
+CREATE TABLE countdown (
+    cdid SERIAL PRIMARY KEY,
+    cid INT NOT NULL REFERENCES class(cid) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    deadline DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_countdown_cid ON countdown(cid);
