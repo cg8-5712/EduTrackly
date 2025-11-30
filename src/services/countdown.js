@@ -135,3 +135,69 @@ export async function listCountdowns({ cid, deadline, page = 1, size = 20, order
 
   return { data, pagination: { page: parseInt(page), size: parseInt(size), total, pages } };
 }
+
+/**
+ * Update a countdown
+ * @param {number} cdid - Countdown ID
+ * @param {Object} updates - Fields to update
+ * @param {string} updates.content - Countdown content (optional)
+ * @param {string} updates.deadline - Deadline in YYYYMMDD format (optional)
+ */
+export async function updateCountdown(cdid, { content, deadline }) {
+  logger.debug(`Updating countdown ${cdid}`, { content, deadline });
+
+  // Check if countdown exists
+  const checkRes = await db.query('SELECT 1 FROM countdown WHERE cdid = $1 LIMIT 1', [cdid]);
+  if (checkRes.rows.length === 0) {
+    logger.warn(`Countdown ${cdid} does not exist`);
+    throw CountdownErrors.NOT_FOUND;
+  }
+
+  const updates = [];
+  const params = [cdid];
+
+  if (content !== undefined) {
+    params.push(content);
+    updates.push(`content = $${params.length}`);
+  }
+
+  if (deadline !== undefined) {
+    const sqlDate = formatDatefromyyyymmddtopsqldate(deadline);
+    params.push(sqlDate);
+    updates.push(`deadline = $${params.length}`);
+  }
+
+  if (updates.length === 0) {
+    logger.warn('No fields to update');
+    throw { code: 400, message: 'No fields to update' };
+  }
+
+  const query = `UPDATE countdown SET ${updates.join(', ')} WHERE cdid = $1 RETURNING cdid, cid, content, deadline, created_at`;
+  const result = await db.query(query, params);
+
+  logger.info(`Countdown ${cdid} updated successfully`, result.rows[0]);
+  return result.rows[0];
+}
+
+/**
+ * Delete a countdown
+ * @param {number} cdid - Countdown ID
+ */
+export async function deleteCountdown(cdid) {
+  logger.debug(`Deleting countdown ${cdid}`);
+
+  // Check if countdown exists
+  const checkRes = await db.query('SELECT 1 FROM countdown WHERE cdid = $1 LIMIT 1', [cdid]);
+  if (checkRes.rows.length === 0) {
+    logger.warn(`Countdown ${cdid} does not exist`);
+    throw CountdownErrors.NOT_FOUND;
+  }
+
+  const result = await db.query(
+    'DELETE FROM countdown WHERE cdid = $1 RETURNING *',
+    [cdid]
+  );
+
+  logger.info(`Countdown ${cdid} deleted successfully`);
+  return result.rows[0];
+}

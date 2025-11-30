@@ -190,3 +190,115 @@ export async function listCountdowns(req, res) {
     handleControllerError(error, res, req);
   }
 }
+
+/**
+ * Update a countdown
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function updateCountdown(req, res) {
+  try {
+    const { cdid } = req.query;
+    const { content, deadline } = req.body;
+    logger.debug('Received updateCountdown request', { cdid, content, deadline });
+
+    // Parameter validation
+    if (!cdid) {
+      logger.warn('Missing required parameter: countdown id');
+      return res.status(400).json({
+        code: 400,
+        message: 'Missing required parameter: countdown id',
+        timestamp: Date.now()
+      });
+    }
+
+    // Check if at least one field is provided for update
+    if (content === undefined && deadline === undefined) {
+      logger.warn('No fields provided for update');
+      return res.status(400).json({
+        code: 400,
+        message: 'At least one field (content or deadline) is required for update',
+        timestamp: Date.now()
+      });
+    }
+
+    // Validate deadline format if provided
+    if (deadline !== undefined && !/^\d{8}$/.test(deadline)) {
+      logger.warn('Invalid deadline format', { deadline });
+      return res.status(400).json({
+        ...ErrorCodes.FormatErrors.NOT_YYYYMMDD_DATE,
+        timestamp: Date.now()
+      });
+    }
+
+    logger.info('Updating countdown', { cdid, content, deadline });
+    const result = await countdownService.updateCountdown(cdid, { content, deadline });
+
+    logger.info('Countdown updated successfully', { cdid });
+    res.json({
+      code: 0,
+      message: 'Countdown updated successfully',
+      data: result,
+      timestamp: Date.now()
+    });
+
+  } catch (error) {
+    logger.error('Error in updateCountdown controller', {
+      error: {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        stack: error.stack
+      },
+      query: req.query,
+      body: req.body
+    });
+
+    handleControllerError(error, res, req);
+  }
+}
+
+/**
+ * Delete a countdown
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function deleteCountdown(req, res) {
+  try {
+    const { cdid } = req.query;
+    logger.debug('Received deleteCountdown request', { cdid });
+
+    // Parameter validation
+    if (!cdid) {
+      logger.warn('Missing required parameter: countdown id');
+      return res.status(400).json({
+        code: 400,
+        message: 'Missing required parameter: countdown id',
+        timestamp: Date.now()
+      });
+    }
+
+    logger.info('Deleting countdown', { cdid });
+    await countdownService.deleteCountdown(cdid);
+
+    logger.info('Countdown deleted successfully', { cdid });
+    res.json({
+      code: 0,
+      message: 'Countdown deleted successfully',
+      timestamp: Date.now()
+    });
+
+  } catch (error) {
+    logger.error('Error in deleteCountdown controller', {
+      error: {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        stack: error.stack
+      },
+      query: req.query
+    });
+
+    handleControllerError(error, res, req);
+  }
+}
