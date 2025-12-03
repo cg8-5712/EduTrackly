@@ -60,6 +60,13 @@ export const SystemErrors = {
   ROUTE_NOT_FOUND: { code: 9010, message: 'Route not found' },
 };
 
+export const CountdownErrors = {
+  NOT_FOUND: { code: 6001, message: 'Countdown not found' },
+  CREATE_FAILED: { code: 6002, message: 'Failed to create countdown' },
+  UPDATE_FAILED: { code: 6003, message: 'Failed to update countdown' },
+  DELETE_FAILED: { code: 6004, message: 'Failed to delete countdown' }
+};
+
 export const FormatErrors = {
   NOT_YYYYMMDD_DATE: { code: 8001, message: 'Date format must be YYYYMMDD' },
   NOT_YYYYMMDDHHMMSS_DATE: { code: 8002, message: 'Date format must be YYYYMMDDHHMMSS' },

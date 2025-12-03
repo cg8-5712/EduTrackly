@@ -9,12 +9,17 @@ INSERT INTO admin (password, ip) VALUES
                                      ('$2b$10$JQCr.iYeaOLnSSp1JqElx.Afc0CjwnBwv9mVH5BFLbGp/ZHRtvcp2', '192.168.1.1'),
                                      ('$2b$10$mQ4MHQBO7EPifW4NBM6ay.H4JqBTUIlyw8oQQTCtyPR365QMqcsRC', '192.168.1.2');
 
--- Class
+-- Class (must be inserted before students and homework due to foreign key constraints)
 INSERT INTO class (class_name) VALUES
                                    ('Class1'),
                                    ('Class2');
 
--- Students
+-- Setting (default settings for each class)
+INSERT INTO setting (cid, is_countdown_display, is_slogan_display) VALUES
+                                                                        (1, true, true),
+                                                                        (2, true, true);
+
+-- Students (cid references class table)
 INSERT INTO student (cid, student_name, attendance) VALUES
                                             (1, 'Alice', true),
                                             (1, 'Bob', false),
@@ -28,7 +33,10 @@ VALUES
     (2, '阅读《围城》并写一篇读后感', '解方程和不等式', '写作一篇关于环保的文章', '运动学基本概念', '化学反应类型', '生态系统', '唐朝历史问答', '欧洲地形图绘制', '国际关系案例分析', '美术作业：绘画一幅风景画', '2023-12-05'),
     (1, '成语故事：《白日做梦》', '概率论和数理统计', '阅读《1984》并做笔记', '力学', '有机化学', '遗传学', '近代史问答', '非洲地形图绘制', '中国政治体制', '计算机编程练习', '2023-12-10');
 
--- Attendance (leave records)
+-- Attendance (leave records - sid references student table)
+-- Note: Student with sid=1 (Alice) has attendance=true, so can have sick/official/personal
+-- Student with sid=2 (Bob) has attendance=false, so can only have 'temp'
+-- Students with sid=3,4 (Charlie, Diana) have attendance=true
 INSERT INTO attendance (sid, event_date, event_type) VALUES
                                                    (1, '2025-08-23', 'sick'),
                                                    (3, '2025-08-23', 'official'),
@@ -36,3 +44,10 @@ INSERT INTO attendance (sid, event_date, event_type) VALUES
                                                    (1, '2025-08-25', 'sick'),
                                                    (3, '2025-08-25', 'personal'),
                                                    (2, '2025-08-25', 'temp');
+
+-- Countdown (cid references class table)
+INSERT INTO countdown (cid, content, deadline) VALUES
+                                                    (1, '12月考', '2025-12-15 09:00:00'),
+                                                    (1, '英语演讲比赛', '2025-12-20 14:00:00'),
+                                                    (2, '数学竞赛', '2025-12-18 10:00:00'),
+                                                    (2, '期末考试', '2026-01-10 09:00:00');
