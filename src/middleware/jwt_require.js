@@ -37,8 +37,11 @@ export default function jwtRequire(req, res, next) {
       });
     }
 
+    // Store user information in request
     req.aid = decoded.aid;
-    logger.debug('✅ JWT verified, aid:', decoded.aid);
+    req.role = decoded.role || 'admin';  // Default to 'admin' for backward compatibility
+
+    logger.debug(`✅ JWT verified, aid: ${decoded.aid}, role: ${req.role}`);
     next();
   } catch (err) {
     logger.error('❌ Invalid or expired token:', err.message);

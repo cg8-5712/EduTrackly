@@ -10,6 +10,7 @@ import { handleControllerError } from '../middleware/error_handler.js';
  */
 export async function login(req, res) {
   const { password } = req.body;
+  console.log(password);
   const ip = req.ip;
 
   logger.debug('Login attempt initiated', { ip });
@@ -40,6 +41,7 @@ export async function login(req, res) {
     logger.info('Login successful', {
       ip,
       aid: authResult.aid,
+      role: authResult.role,
       expiresIn: authResult.expires_in
     });
 

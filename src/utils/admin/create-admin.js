@@ -39,6 +39,14 @@ async function createAdmin() {
       process.exit(1);
     }
 
+    // Get role
+    console.log('\nAvailable roles:');
+    console.log('  1. admin (default) - Can only manage assigned classes');
+    console.log('  2. superadmin - Can manage all classes and admins');
+
+    const roleChoice = await question('\nSelect role (1 or 2, default: 1): ');
+    const role = roleChoice === '2' ? 'superadmin' : 'admin';
+
     // Hash password
     console.log('\n🔒 Hashing password...');
     const hashedPassword = await hashPassword(password);
@@ -46,18 +54,28 @@ async function createAdmin() {
     // Insert into database
     console.log('💾 Creating admin account...');
     const result = await db.query(
-      'INSERT INTO admin (password, ip) VALUES ($1, $2) RETURNING aid',
-      [hashedPassword, '0.0.0.0']
+      'INSERT INTO admin (password, role, ip) VALUES ($1, $2, $3) RETURNING aid, role',
+      [hashedPassword, role, '0.0.0.0']
     );
 
-    const aid = result.rows[0].aid;
+    const admin = result.rows[0];
 
     console.log(`\n✅ Admin account created successfully!`);
-    console.log(`   Admin ID: ${aid}`);
+    console.log(`   Admin ID: ${admin.aid}`);
+    console.log(`   Role: ${admin.role}`);
     console.log(`   Password: [hashed with bcrypt]`);
-    console.log(`\nYou can now login with this password.\n`);
 
-    logger.info('New admin account created', { aid });
+    if (role === 'admin') {
+      console.log(`\n📝 Note: This is a regular admin account.`);
+      console.log(`   Use superadmin to assign classes to this admin.`);
+    } else {
+      console.log(`\n👑 Note: This is a superadmin account.`);
+      console.log(`   This account can manage all classes and other admins.`);
+    }
+
+    console.log(`\nYou can now login with your password.\n`);
+
+    logger.info('New admin account created', { aid: admin.aid, role: admin.role });
 
   } catch (error) {
     console.error('\n❌ Failed to create admin account:', error.message);

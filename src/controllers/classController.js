@@ -1,4 +1,5 @@
 import * as classService from '../services/class.js';
+import { assignClassToAdmin } from '../services/admin.js';
 import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { listStudents } from '../services/student.js';
@@ -24,7 +25,13 @@ export async function createClassController(req, res) {
 
     logger.info('Creating new class', { class_name });
     const result = await classService.createClass(class_name);
-    logger.debug('Class created successfully', { class_id: result.data?.id });
+    logger.debug('Class created successfully', { class_id: result.data?.cid });
+
+    // Auto-assign class to current admin if not superadmin
+    if (req.role !== 'superadmin' && result.data?.cid) {
+      await assignClassToAdmin(req.aid, result.data.cid);
+      logger.info('Class auto-assigned to admin', { aid: req.aid, cid: result.data.cid });
+    }
 
     return res.status(200).json({
       code: result.code,
