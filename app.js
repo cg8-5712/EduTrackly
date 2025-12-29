@@ -10,7 +10,8 @@ const routes = [
   { path: 'analysis', route: import('./src/routes/analysis.js') },
   { path: 'system', route: import('./src/routes/system.js') },
   { path: 'countdown', route: import('./src/routes/countdown.js') },
-  { path: 'setting', route: import('./src/routes/setting.js') }
+  { path: 'setting', route: import('./src/routes/setting.js') },
+  { path: 'admin', route: import('./src/routes/admin.js') }
 ];
 
 const app = express();

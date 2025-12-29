@@ -3,25 +3,41 @@ export const AuthErrors = {
   INVALID_TOKEN: { code: 1001, message: 'Invalid or expired token' },
   LOGIN_FAILED: { code: 1002, message: 'Login failed' },
   UNAUTHORIZED: { code: 1003, message: 'Unauthorized access' },
-  PASSWORD_REQUIRED: { 
-    code: 1004, 
-    message: 'Password is required' 
+  PASSWORD_REQUIRED: {
+    code: 1004,
+    message: 'Password is required'
   },
-  INVALID_PASSWORD_FORMAT: { 
-    code: 1005, 
-    message: 'Invalid password format' 
+  INVALID_PASSWORD_FORMAT: {
+    code: 1005,
+    message: 'Invalid password format'
   },
-  TOO_MANY_ATTEMPTS: { 
-    code: 1006, 
-    message: 'Too many login attempts. Please try again later' 
+  TOO_MANY_ATTEMPTS: {
+    code: 1006,
+    message: 'Too many login attempts. Please try again later'
   },
-  IP_BLOCKED: { 
-    code: 1007, 
-    message: 'Access blocked due to suspicious activity' 
+  IP_BLOCKED: {
+    code: 1007,
+    message: 'Access blocked due to suspicious activity'
   },
-  SESSION_EXPIRED: { 
-    code: 1008, 
-    message: 'Session has expired, please login again' 
+  SESSION_EXPIRED: {
+    code: 1008,
+    message: 'Session has expired, please login again'
+  },
+  USERNAME_REQUIRED: {
+    code: 1009,
+    message: 'Username is required'
+  },
+  FORBIDDEN: {
+    code: 1010,
+    message: 'You do not have permission to perform this action'
+  },
+  SUPERADMIN_REQUIRED: {
+    code: 1011,
+    message: 'This action requires superadmin privileges'
+  },
+  CLASS_ACCESS_DENIED: {
+    code: 1012,
+    message: 'You do not have permission to access this class'
   }
 };
 

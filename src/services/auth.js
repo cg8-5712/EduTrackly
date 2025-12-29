@@ -13,7 +13,7 @@ import logger from '../middleware/loggerMiddleware.js';
  */
 export async function authenticateUser(password, ip) {
   // Find all admin accounts
-  const query = 'SELECT aid, password, time AS last_login_time, ip AS last_login_ip FROM admin';
+  const query = 'SELECT aid, password, role, time AS last_login_time, ip AS last_login_ip FROM admin';
   const result = await db.query(query);
 
   if (result.rowCount === 0) {
@@ -23,12 +23,20 @@ export async function authenticateUser(password, ip) {
   // Iterate through all accounts, check if password matches using bcrypt
   for (const admin of result.rows) {
     // Use bcrypt.compare to check password against hash
+
     const isPasswordValid = await bcrypt.compare(password, admin.password);
 
     if (isPasswordValid) {
-      // Generate JWT
+      // Generate JWT with role information
       const expiresIn = parseInt(config.jwt.expires) || 3600; // Default 1 hour
-      const token = jwt.sign({ aid: admin.aid }, config.jwt.secret, { expiresIn });
+      const token = jwt.sign(
+        {
+          aid: admin.aid,
+          role: admin.role
+        },
+        config.jwt.secret,
+        { expiresIn }
+      );
 
       // Update last login information
       const updateQuery = `
@@ -39,13 +47,14 @@ export async function authenticateUser(password, ip) {
       await db.query(updateQuery, [ip, admin.aid]);
 
       if (config.app.env === 'debug') {
-        logger.debug(`User ${admin.aid} logged in from ${ip} with token ${token} and expires in ${expiresIn} seconds`);
+        logger.debug(`Admin ${admin.aid} (${admin.role}) logged in from ${ip} with token ${token} and expires in ${expiresIn} seconds`);
       } else {
-        logger.info(`User ${admin.aid} logged successfully`);
+        logger.info(`Admin ${admin.aid} (${admin.role}) logged successfully`);
       }
 
       return {
         aid: admin.aid,
+        role: admin.role,
         access_token: token,
         expires_in: expiresIn,
         last_login_time: Math.floor(new Date(admin.last_login_time).getTime() / 1000),

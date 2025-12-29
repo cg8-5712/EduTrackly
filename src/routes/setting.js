@@ -9,4 +9,3 @@ router.get('/get', settingController.getSetting);
 router.put('/update', jwtRequire, settingController.updateSetting);
 
 export default router;
-

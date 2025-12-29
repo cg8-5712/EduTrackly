@@ -40,6 +40,7 @@ export async function login(req, res) {
     logger.info('Login successful', {
       ip,
       aid: authResult.aid,
+      role: authResult.role,
       expiresIn: authResult.expires_in
     });
 

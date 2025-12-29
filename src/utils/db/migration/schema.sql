@@ -6,9 +6,16 @@
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS homework CASCADE;
+DROP TABLE IF EXISTS admin_class CASCADE;
 DROP TABLE IF EXISTS admin CASCADE;
 DROP TABLE IF EXISTS countdown CASCADE;
 DROP TABLE IF EXISTS setting CASCADE;
+
+-- Drop old types if exist
+DROP TYPE IF EXISTS admin_role CASCADE;
+
+-- ================= Admin Role Type =================
+CREATE TYPE admin_role AS ENUM ('superadmin', 'admin');
 
 -- ================= Admin Table =================
 CREATE SEQUENCE IF NOT EXISTS admin_aid_seq START WITH 1;
@@ -16,6 +23,7 @@ CREATE SEQUENCE IF NOT EXISTS admin_aid_seq START WITH 1;
 CREATE TABLE admin (
                        aid INTEGER PRIMARY KEY DEFAULT nextval('admin_aid_seq'),
                        password VARCHAR(60) NOT NULL,  -- bcrypt hash is 60 characters
+                       role admin_role NOT NULL DEFAULT 'admin',  -- superadmin or admin
                        time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        ip VARCHAR(45)
 );
@@ -52,6 +60,20 @@ CREATE TABLE class (
                          class_name VARCHAR(50) NOT NULL UNIQUE,
                          create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ================= Admin-Class Association Table =================
+-- Links admin accounts to the classes they can manage
+-- superadmin can manage all classes regardless of this table
+-- regular admin can only manage classes listed in this table
+CREATE TABLE admin_class (
+    aid INTEGER NOT NULL REFERENCES admin(aid) ON DELETE CASCADE,
+    cid INTEGER NOT NULL REFERENCES class(cid) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (aid, cid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_class_aid ON admin_class(aid);
+CREATE INDEX IF NOT EXISTS idx_admin_class_cid ON admin_class(cid);
 
 -- ================= Attendance Table =================
 CREATE TYPE event_type AS ENUM ('official', 'personal', 'sick', 'temp');

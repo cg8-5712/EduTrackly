@@ -2,6 +2,7 @@ import * as studentService from '../services/student.js';
 import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { handleControllerError } from '../middleware/error_handler.js';
+import { hasClassAccess } from '../middleware/role_require.js';
 
 /**
  * POST /students/add
@@ -21,6 +22,22 @@ export async function addStudentsController(req, res) {
 
     logger.debug('Received addStudents request', { studentCount: students.length });
 
+    // Check class access for each student's cid (skip for superadmin)
+    if (req.role !== 'superadmin') {
+      const uniqueCids = [...new Set(students.map(s => s.cid).filter(cid => cid))];
+
+      for (const cid of uniqueCids) {
+        const hasAccess = await hasClassAccess(req.aid, cid, req.role);
+        if (!hasAccess) {
+          logger.warn('Class access denied for add students', { aid: req.aid, cid });
+          return res.status(403).json({
+            ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+            timestamp: Date.now()
+          });
+        }
+      }
+    }
+
     await studentService.addStudents(students);
     logger.info('Students added successfully', { addedCount: students.length });
 
@@ -31,6 +48,7 @@ export async function addStudentsController(req, res) {
     });
 
   } catch (error) {
+    const studentCountForLog = Array.isArray(req.body) ? req.body.length : undefined;
     logger.error('Error in addStudents controller', {
       error: {
         message: error.message,
@@ -38,7 +56,7 @@ export async function addStudentsController(req, res) {
         code: error.code,
         stack: error.stack
       },
-      studentCount: students?.length
+      studentCount: studentCountForLog
     });
 
     if (error.code && error.message && typeof error.code === 'number') {
