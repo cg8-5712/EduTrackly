@@ -101,7 +101,7 @@ export async function getAdmin(req, res) {
  * List all admins
  */
 export async function listAdmins(req, res) {
-  const { page = 1, size = 20, role } = req.body;
+  const { page = 1, size = 20, role } = req.query;
 
   try {
     const result = await adminService.listAdmins({

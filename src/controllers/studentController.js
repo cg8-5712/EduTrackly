@@ -48,6 +48,7 @@ export async function addStudentsController(req, res) {
     });
 
   } catch (error) {
+    const studentCountForLog = Array.isArray(req.body) ? req.body.length : undefined;
     logger.error('Error in addStudents controller', {
       error: {
         message: error.message,
@@ -55,7 +56,7 @@ export async function addStudentsController(req, res) {
         code: error.code,
         stack: error.stack
       },
-      studentCount: req.body?.length
+      studentCount: studentCountForLog
     });
 
     if (error.code && error.message && typeof error.code === 'number') {
