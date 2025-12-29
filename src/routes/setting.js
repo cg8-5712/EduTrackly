@@ -1,6 +1,6 @@
 import express from 'express';
 import * as settingController from '../controllers/settingController.js';
-import jwtRequire from '../middleware/jwt_require.js';
+import jwtRequire from "../middleware/jwt_require.js";
 
 const router = express.Router();
 
