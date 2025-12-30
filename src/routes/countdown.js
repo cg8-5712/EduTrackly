@@ -1,17 +1,21 @@
 import express from 'express';
 import * as countdownController from '../controllers/countdownController.js';
 import jwtRequire from '../middleware/jwt_require.js';
+import { requireClassAccess, requireCountdownClassAccess } from '../middleware/role_require.js';
 
 const router = express.Router();
 
-router.post('/create', countdownController.createCountdown);
+// Create countdown - require JWT and class access (cid from body)
+router.post('/create', jwtRequire, requireClassAccess({ cidSource: 'body' }), countdownController.createCountdown);
 
 router.get('/get', countdownController.getCountdown);
 
-router.get('/list', jwtRequire, countdownController.listCountdowns);
+router.get('/list', countdownController.listCountdowns);
 
-router.put('/update', jwtRequire, countdownController.updateCountdown);
+// Update countdown - require JWT and countdown class access (cdid from query)
+router.put('/update', jwtRequire, requireCountdownClassAccess({ cdidSource: 'query' }), countdownController.updateCountdown);
 
-router.delete('/delete', jwtRequire, countdownController.deleteCountdown);
+// Delete countdown - require JWT and countdown class access (cdid from query)
+router.delete('/delete', jwtRequire, requireCountdownClassAccess({ cdidSource: 'query' }), countdownController.deleteCountdown);
 
 export default router;

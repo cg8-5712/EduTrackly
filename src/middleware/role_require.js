@@ -187,3 +187,74 @@ export function requireStudentClassAccess(options = {}) {
     }
   };
 }
+
+/**
+ * Middleware to check access to countdown's class
+ * Gets countdown by cdid and checks class access
+ * Must be used after jwtRequire middleware
+ */
+export function requireCountdownClassAccess(options = {}) {
+  const { cdidSource = 'query', cdidField = 'cdid' } = options;
+
+  return async (req, res, next) => {
+    try {
+      // superadmin has access to all
+      if (req.role === 'superadmin') {
+        return next();
+      }
+
+      let cdid;
+
+      // Extract cdid based on source
+      switch (cdidSource) {
+        case 'query':
+          cdid = req.query[cdidField];
+          break;
+        case 'params':
+          cdid = req.params[cdidField];
+          break;
+        case 'body':
+          cdid = req.body[cdidField];
+          break;
+        default:
+          cdid = req.query[cdidField] || req.params[cdidField] || req.body[cdidField];
+      }
+
+      // If no cdid provided, skip check (let controller handle missing param)
+      if (!cdid) {
+        return next();
+      }
+
+      cdid = parseInt(cdid, 10);
+      if (isNaN(cdid)) {
+        return next();
+      }
+
+      // Get countdown's class
+      const countdownQuery = 'SELECT cid FROM countdown WHERE cdid = $1';
+      const countdownResult = await db.query(countdownQuery, [cdid]);
+
+      if (countdownResult.rowCount === 0) {
+        // Countdown not found, let controller handle it
+        return next();
+      }
+
+      const cid = countdownResult.rows[0].cid;
+      const hasAccess = await hasClassAccess(req.aid, cid, req.role);
+
+      if (!hasAccess) {
+        logger.warn(`⛔ Countdown class access denied for admin ${req.aid} to countdown ${cdid} (class ${cid})`);
+        return res.status(403).json({
+          code: AuthErrors.CLASS_ACCESS_DENIED.code,
+          message: AuthErrors.CLASS_ACCESS_DENIED.message,
+          timestamp: Date.now(),
+        });
+      }
+
+      next();
+    } catch (error) {
+      logger.error('Error checking countdown class access:', error.message);
+      next(error);
+    }
+  };
+}

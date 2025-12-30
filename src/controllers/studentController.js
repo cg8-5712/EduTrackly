@@ -3,6 +3,7 @@ import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { handleControllerError } from '../middleware/error_handler.js';
 import { hasClassAccess } from '../middleware/role_require.js';
+import db from '../utils/db/db_connector.js';
 
 /**
  * POST /students/add
@@ -298,21 +299,36 @@ export async function putStudentEventController(req, res) {
     const date = req.params.date || req.query.date;
     logger.debug('Received putStudentEvent request', { eventCount: events?.length, date });
 
-    // If date is passed via query parameter, validate admin authorization
-    // if (date && req.query.date && !req.aid) {
-    //     logger.warn('Missing admin authorization for date-specific operation');
-    //     return res.status(401).json({
-    //         ...ErrorCodes.AuthErrors.UNAUTHORIZED,
-    //         timestamp: Date.now()
-    //     });
-    // }
-
     if (!events || !Array.isArray(events)) {
       logger.warn('Invalid or missing events array in request body');
       return res.status(400).json({
         ...ErrorCodes.ParamsErrors.REQUIRE_EVENTS_ARRAY,
         timestamp: Date.now()
       });
+    }
+
+    // Check class access for each student's class (skip for superadmin)
+    if (req.role !== 'superadmin') {
+      const uniqueSids = [...new Set(events.map(e => e.sid).filter(sid => sid))];
+
+      if (uniqueSids.length > 0) {
+        // Get all students' class IDs in one query
+        const studentQuery = 'SELECT sid, cid FROM student WHERE sid = ANY($1)';
+        const studentResult = await db.query(studentQuery, [uniqueSids]);
+
+        const uniqueCids = [...new Set(studentResult.rows.map(s => s.cid))];
+
+        for (const cid of uniqueCids) {
+          const hasAccess = await hasClassAccess(req.aid, cid, req.role);
+          if (!hasAccess) {
+            logger.warn('Class access denied for put student events', { aid: req.aid, cid });
+            return res.status(403).json({
+              ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+              timestamp: Date.now()
+            });
+          }
+        }
+      }
     }
 
     const result = await studentService.putStudentEvents(events, date);
