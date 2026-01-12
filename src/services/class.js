@@ -86,22 +86,57 @@ export async function getClass( param ) {
 }
 
 // service 层
-export async function listClass({ order = 'asc', page = 1, size = 20 }) {
+export async function listClass({ order = 'asc', page = 1, size = 20, cids = null }) {
   try {
     const offset = (page - 1) * size;
     const orderClause = order.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
 
-    const query = `
-      SELECT cid,
-             class_name,
-             create_time
-      FROM class
-      ORDER BY cid ${orderClause}
-      LIMIT $1 OFFSET $2
-    `;
+    // 如果指定了 cids 且为空数组，直接返回空结果
+    if (cids !== null && Array.isArray(cids) && cids.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          page,
+          size,
+          total: 0,
+          pages: 0
+        }
+      };
+    }
 
-    logger.debug('Executing listClass query:', query, [size, offset]);
-    const result = await db.query(query, [size, offset]);
+    let query;
+    let countQuery;
+    let params;
+
+    if (cids !== null && Array.isArray(cids)) {
+      // 过滤指定的班级
+      query = `
+        SELECT cid,
+               class_name,
+               create_time
+        FROM class
+        WHERE cid = ANY($1)
+        ORDER BY cid ${orderClause}
+        LIMIT $2 OFFSET $3
+      `;
+      countQuery = 'SELECT COUNT(*) FROM class WHERE cid = ANY($1)';
+      params = [cids, size, offset];
+    } else {
+      // 返回所有班级
+      query = `
+        SELECT cid,
+               class_name,
+               create_time
+        FROM class
+        ORDER BY cid ${orderClause}
+        LIMIT $1 OFFSET $2
+      `;
+      countQuery = 'SELECT COUNT(*) FROM class';
+      params = [size, offset];
+    }
+
+    logger.debug('Executing listClass query:', query, params);
+    const result = await db.query(query, params);
 
     const data = result.rows.map(r => ({
       ...r,
@@ -109,8 +144,8 @@ export async function listClass({ order = 'asc', page = 1, size = 20 }) {
     }));
 
     // Get total count
-    const countQuery = 'SELECT COUNT(*) FROM class';
-    const countRes = await db.query(countQuery);
+    const countParams = cids !== null && Array.isArray(cids) ? [cids] : [];
+    const countRes = await db.query(countQuery, countParams);
     const total = parseInt(countRes.rows[0].count, 10);
     const pages = Math.ceil(total / size);
 

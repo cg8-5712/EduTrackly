@@ -4,6 +4,7 @@ import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { listStudents } from '../services/student.js';
 import { handleControllerError } from '../middleware/error_handler.js';
+import { hasClassAccess, getAccessibleClassIds } from '../middleware/role_require.js';
 
 /**
  * Create a new class
@@ -81,15 +82,27 @@ export async function getClassController(req, res) {
       });
     }
 
+    // 普通管理员权限检查
+    if (req.aid && req.role === 'admin' && cid) {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Class access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
+
     const param = parseInt(cid) || class_name;
     logger.info('Fetching class details', { param });
 
     const class_result = await classService.getClass(param);
     const student_result = await listStudents({ cid, page: 1, size: 100000 });
 
-    logger.debug('Class and students retrieved', { 
+    logger.debug('Class and students retrieved', {
       class_id: class_result.data?.id,
-      student_count: student_result.rows?.length 
+      student_count: student_result.rows?.length
     });
 
     // Attach students to class data
@@ -126,12 +139,22 @@ export async function getClassController(req, res) {
 export async function listClass(req, res) {
   const { order = 'asc' } = req.query;
   const { page = 1, size = 20 } = req.body;
-    
+
   logger.debug('List classes request received', { order, page, size });
 
   try {
-    logger.info('Fetching class list', { order, page, size });
-    const result = await classService.listClass({ order, page, size });
+    // 根据角色过滤班级
+    let accessibleCids = null; // null 表示所有班级
+
+    if (req.aid && req.role === 'admin') {
+      // 普通管理员：只返回分配的班级
+      accessibleCids = await getAccessibleClassIds(req.aid, req.role);
+      logger.debug('Filtering classes for admin', { aid: req.aid, accessibleCids });
+    }
+    // 超级管理员或未登录：返回所有班级
+
+    logger.info('Fetching class list', { order, page, size, filtered: accessibleCids !== null });
+    const result = await classService.listClass({ order, page, size, cids: accessibleCids });
 
     logger.debug('Classes retrieved successfully', {
       total_count: result.data?.length,

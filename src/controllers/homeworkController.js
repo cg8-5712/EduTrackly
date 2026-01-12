@@ -3,6 +3,7 @@ import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import moment from 'moment';
 import { handleControllerError } from '../middleware/error_handler.js';
+import { hasClassAccess } from '../middleware/role_require.js';
 
 /**
  * Get homework by class ID and date
@@ -20,6 +21,18 @@ export async function getHomework(req, res) {
         ...ErrorCodes.ParamsErrors.REQUIRE_CID,
         timestamp: Date.now()
       });
+    }
+
+    // 普通管理员权限检查
+    if (req.aid && req.role === 'admin') {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Homework class access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
     }
 
     date = date || moment().format('YYYYMMDD');
@@ -82,6 +95,18 @@ export async function listHomeworks(req, res) {
   logger.debug('List homeworks request initiated', { cid, startDate, endDate, order, page, size });
 
   try {
+    // 普通管理员权限检查
+    if (req.aid && req.role === 'admin' && cid) {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Homework list class access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
+
     // Validate pagination parameters
     if (page < 1 || isNaN(page)) {
       logger.warn('Invalid page number', { page });

@@ -4,6 +4,8 @@ import * as ErrorCodes from '../config/errorCodes.js';
 import { handleControllerError } from '../middleware/error_handler.js';
 import { formatDatefromsqldatetoyyyymmdd, formatDatefromyyyymmddtopsqldate } from '../utils/dateUtils.js';
 import moment from 'moment';
+import { hasClassAccess } from '../middleware/role_require.js';
+import db from '../utils/db/db_connector.js';
 
 /**
  * Get today's analysis for a specific class
@@ -21,6 +23,18 @@ export async function getToday(req, res) {
         ...ErrorCodes.ParamsErrors.REQUIRE_CID,
         timestamp: Date.now()
       });
+    }
+
+    // 普通管理员权限检查
+    if (req.aid && req.role === 'admin') {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Analysis class access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
     }
 
     const targetDate = date || moment().format('YYYYMMDD');
@@ -122,6 +136,24 @@ export async function getStudentsAnalysisController(req, res) {
         ...ErrorCodes.ParamsErrors.REQUIRE_STUDENT_ID,
         timestamp: Date.now()
       });
+    }
+
+    // 普通管理员权限检查 - 通过学生查找班级
+    if (req.aid && req.role === 'admin') {
+      const studentQuery = 'SELECT cid FROM student WHERE sid = $1';
+      const studentResult = await db.query(studentQuery, [parseInt(sid)]);
+
+      if (studentResult.rowCount > 0) {
+        const cid = studentResult.rows[0].cid;
+        const hasAccess = await hasClassAccess(req.aid, cid, req.role);
+        if (!hasAccess) {
+          logger.warn('Student analysis class access denied', { aid: req.aid, sid, cid });
+          return res.status(403).json({
+            ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+            timestamp: Date.now()
+          });
+        }
+      }
     }
 
     // Date format conversion

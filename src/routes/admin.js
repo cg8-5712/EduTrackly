@@ -1,6 +1,7 @@
 // src/routes/admin.js
 import { Router } from 'express';
 import * as adminController from '../controllers/adminController.js';
+import * as rateLimitController from '../controllers/rateLimitController.js';
 import jwtRequire from '../middleware/jwt_require.js';
 import { requireSuperAdmin } from '../middleware/role_require.js';
 
@@ -37,5 +38,12 @@ router.get('/class/list', jwtRequire, requireSuperAdmin, adminController.getAdmi
 
 // Replace all class assignments for an admin
 router.put('/class/replace', jwtRequire, requireSuperAdmin, adminController.replaceClasses);
+
+// Rate limit configuration management
+router.get('/rate-limit/list', jwtRequire, requireSuperAdmin, rateLimitController.listRateLimitConfigs);
+router.get('/rate-limit/get', jwtRequire, requireSuperAdmin, rateLimitController.getRateLimitConfig);
+router.post('/rate-limit/create', jwtRequire, requireSuperAdmin, rateLimitController.createRateLimitConfig);
+router.put('/rate-limit/update', jwtRequire, requireSuperAdmin, rateLimitController.updateRateLimitConfig);
+router.delete('/rate-limit/delete', jwtRequire, requireSuperAdmin, rateLimitController.deleteRateLimitConfig);
 
 export default router;

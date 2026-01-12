@@ -2,6 +2,7 @@ import * as countdownService from '../services/countdown.js';
 import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { handleControllerError } from '../middleware/error_handler.js';
+import { hasClassAccess } from '../middleware/role_require.js';
 
 /**
  * Create a countdown
@@ -89,6 +90,18 @@ export async function getCountdown(req, res) {
     logger.info('Fetching countdown', { cdid });
     const result = await countdownService.getCountdown(cdid);
 
+    // 普通管理员权限检查
+    if (req.aid && req.role === 'admin' && result && result.cid) {
+      const hasAccess = await hasClassAccess(req.aid, result.cid, req.role);
+      if (!hasAccess) {
+        logger.warn('Countdown class access denied', { aid: req.aid, cdid, cid: result.cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
+
     logger.info('Countdown retrieved successfully', { cdid });
     res.json({
       code: 0,
@@ -122,6 +135,18 @@ export async function listCountdowns(req, res) {
     const { cid, deadline, order = 'desc' } = req.query;
     const { page = 1, size = 20 } = req.body;
     logger.debug('Received listCountdowns request', { cid, deadline, order, page, size });
+
+    // 普通管理员权限检查
+    if (req.aid && req.role === 'admin' && cid) {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Countdown list class access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
 
     // Validate pagination parameters
     if (page < 1 || isNaN(page)) {

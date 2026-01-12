@@ -2,7 +2,7 @@ import * as studentService from '../services/student.js';
 import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { handleControllerError } from '../middleware/error_handler.js';
-import { hasClassAccess } from '../middleware/role_require.js';
+import { hasClassAccess, getAccessibleClassIds } from '../middleware/role_require.js';
 import db from '../utils/db/db_connector.js';
 
 /**
@@ -86,6 +86,18 @@ export async function getStudentController(req, res) {
       student_name || undefined
     );
 
+    // 普通管理员权限检查
+    if (req.aid && req.role === 'admin' && student && student.cid) {
+      const hasAccess = await hasClassAccess(req.aid, student.cid, req.role);
+      if (!hasAccess) {
+        logger.warn('Student class access denied', { aid: req.aid, sid, cid: student.cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
+
     logger.info('Student retrieved successfully', { sid, student_name });
     res.json({
       code: 0,
@@ -128,6 +140,19 @@ export async function getStudentlistController(req, res) {
     let { page, size } = req.body;
 
     logger.debug('Received listStudents request', { cid, page, size });
+
+    // 普通管理员权限检查
+    if (req.aid && req.role === 'admin' && cid) {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Student list class access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
+
     const result = await studentService.listStudents({ cid, page, size });
 
     logger.info('Student list retrieved successfully', { cid, total: result?.pagination?.total });
