@@ -35,6 +35,17 @@ export async function getAdminById(aid) {
 }
 
 /**
+ * Get admin by ID with password hash (for password verification)
+ * @param {number} aid - Admin ID
+ * @returns {Object|null} - Admin info with password or null
+ */
+export async function getAdminWithPassword(aid) {
+  const query = 'SELECT aid, password, role FROM admin WHERE aid = $1';
+  const result = await db.query(query, [aid]);
+  return result.rows[0] || null;
+}
+
+/**
  * List all admins with pagination
  * @param {Object} options - Pagination options
  * @returns {Object} - List of admins with pagination info

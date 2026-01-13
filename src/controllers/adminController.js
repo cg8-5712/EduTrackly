@@ -3,6 +3,7 @@ import * as adminService from '../services/admin.js';
 import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { handleControllerError } from '../middleware/error_handler.js';
+import bcrypt from 'bcrypt';
 
 // Error codes for admin operations
 const AdminErrors = {
@@ -12,6 +13,8 @@ const AdminErrors = {
   CANNOT_DEMOTE_SELF: { code: 5005, message: 'Cannot demote your own account' },
   INVALID_ROLE: { code: 5006, message: 'Invalid role. Must be superadmin or admin' },
   CLASS_NOT_FOUND: { code: 5007, message: 'Class not found' },
+  WRONG_OLD_PASSWORD: { code: 5009, message: 'Old password is incorrect' },
+  SAME_PASSWORD: { code: 5010, message: 'New password cannot be the same as old password' },
 };
 
 /**
@@ -408,6 +411,69 @@ export async function getCurrentAdmin(req, res) {
     });
   } catch (error) {
     logger.error('Get current admin error:', error.message);
+    handleControllerError(error, res, req);
+  }
+}
+
+/**
+ * Change current admin's password
+ * Requires old password verification
+ */
+export async function changePassword(req, res) {
+  const { old_password, new_password } = req.body;
+
+  try {
+    // Validate required fields
+    if (!old_password || !new_password) {
+      return res.status(400).json({
+        ...ErrorCodes.AuthErrors.PASSWORD_REQUIRED,
+        message: 'Both old_password and new_password are required',
+        timestamp: Date.now()
+      });
+    }
+
+    // Get current admin's password hash
+    const adminWithPassword = await adminService.getAdminWithPassword(req.aid);
+
+    if (!adminWithPassword) {
+      return res.status(404).json({
+        ...AdminErrors.NOT_FOUND,
+        timestamp: Date.now()
+      });
+    }
+
+    // Verify old password
+    const isOldPasswordValid = await bcrypt.compare(old_password, adminWithPassword.password);
+
+    if (!isOldPasswordValid) {
+      return res.status(400).json({
+        ...AdminErrors.WRONG_OLD_PASSWORD,
+        timestamp: Date.now()
+      });
+    }
+
+    // Check if new password is same as old password
+    const isSamePassword = await bcrypt.compare(new_password, adminWithPassword.password);
+
+    if (isSamePassword) {
+      return res.status(400).json({
+        ...AdminErrors.SAME_PASSWORD,
+        timestamp: Date.now()
+      });
+    }
+
+    // Update password
+    await adminService.updateAdmin(req.aid, { password: new_password });
+
+    logger.info(`Admin ${req.aid} changed their password`);
+
+    return res.json({
+      code: 0,
+      message: 'Password changed successfully',
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    logger.error('Change password error:', error.message);
     handleControllerError(error, res, req);
   }
 }

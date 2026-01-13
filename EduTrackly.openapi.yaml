@@ -2430,6 +2430,78 @@ paths:
           headers: {}
       security:
         - BearerAuth: []
+  /admin/password:
+    put:
+      summary: Change password
+      deprecated: false
+      description: Change current admin's password (requires old password verification)
+      tags:
+        - Admin
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - old_password
+                - new_password
+              properties:
+                old_password:
+                  type: string
+                  description: Current password
+                  example: "oldPassword123"
+                new_password:
+                  type: string
+                  description: New password
+                  example: "newPassword456"
+        required: true
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Password changed successfully
+                  timestamp:
+                    type: integer
+          headers: {}
+        '400':
+          description: Bad request (wrong old password or same password)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                wrongPassword:
+                  summary: Wrong old password
+                  value:
+                    code: 5009
+                    message: Old password is incorrect
+                    timestamp: 1234567890
+                samePassword:
+                  summary: Same password
+                  value:
+                    code: 5010
+                    message: New password cannot be the same as old password
+                    timestamp: 1234567890
+          headers: {}
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+      security:
+        - BearerAuth: []
   /admin/create:
     post:
       summary: Create admin account

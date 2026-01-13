@@ -10,6 +10,9 @@ const router = Router();
 // Get current admin info (requires authentication)
 router.get('/me', jwtRequire, adminController.getCurrentAdmin);
 
+// Change current admin's password (requires authentication, no superadmin required)
+router.put('/password', jwtRequire, adminController.changePassword);
+
 // All routes below require superadmin role
 // Create admin account
 router.post('/create', jwtRequire, requireSuperAdmin, adminController.createAdmin);
