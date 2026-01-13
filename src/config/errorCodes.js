@@ -83,6 +83,13 @@ export const CountdownErrors = {
   DELETE_FAILED: { code: 6004, message: 'Failed to delete countdown' }
 };
 
+export const SloganErrors = {
+  NOT_FOUND: { code: 6101, message: 'Slogan not found' },
+  CREATE_FAILED: { code: 6102, message: 'Failed to create slogan' },
+  UPDATE_FAILED: { code: 6103, message: 'Failed to update slogan' },
+  DELETE_FAILED: { code: 6104, message: 'Failed to delete slogan' }
+};
+
 export const FormatErrors = {
   NOT_YYYYMMDD_DATE: { code: 8001, message: 'Date format must be YYYYMMDD' },
   NOT_YYYYMMDDHHMMSS_DATE: { code: 8002, message: 'Date format must be YYYYMMDDHHMMSS' },

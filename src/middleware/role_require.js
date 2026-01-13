@@ -258,3 +258,74 @@ export function requireCountdownClassAccess(options = {}) {
     }
   };
 }
+
+/**
+ * Middleware to check access to slogan's class
+ * Gets slogan by slid and checks class access
+ * Must be used after jwtRequire middleware
+ */
+export function requireSloganClassAccess(options = {}) {
+  const { slidSource = 'query', slidField = 'slid' } = options;
+
+  return async (req, res, next) => {
+    try {
+      // superadmin has access to all
+      if (req.role === 'superadmin') {
+        return next();
+      }
+
+      let slid;
+
+      // Extract slid based on source
+      switch (slidSource) {
+        case 'query':
+          slid = req.query[slidField];
+          break;
+        case 'params':
+          slid = req.params[slidField];
+          break;
+        case 'body':
+          slid = req.body[slidField];
+          break;
+        default:
+          slid = req.query[slidField] || req.params[slidField] || req.body[slidField];
+      }
+
+      // If no slid provided, skip check (let controller handle missing param)
+      if (!slid) {
+        return next();
+      }
+
+      slid = parseInt(slid, 10);
+      if (isNaN(slid)) {
+        return next();
+      }
+
+      // Get slogan's class
+      const sloganQuery = 'SELECT cid FROM slogan WHERE slid = $1';
+      const sloganResult = await db.query(sloganQuery, [slid]);
+
+      if (sloganResult.rowCount === 0) {
+        // Slogan not found, let controller handle it
+        return next();
+      }
+
+      const cid = sloganResult.rows[0].cid;
+      const hasAccess = await hasClassAccess(req.aid, cid, req.role);
+
+      if (!hasAccess) {
+        logger.warn(`⛔ Slogan class access denied for admin ${req.aid} to slogan ${slid} (class ${cid})`);
+        return res.status(403).json({
+          code: AuthErrors.CLASS_ACCESS_DENIED.code,
+          message: AuthErrors.CLASS_ACCESS_DENIED.message,
+          timestamp: Date.now(),
+        });
+      }
+
+      next();
+    } catch (error) {
+      logger.error('Error checking slogan class access:', error.message);
+      next(error);
+    }
+  };
+}

@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS homework CASCADE;
 DROP TABLE IF EXISTS admin_class CASCADE;
 DROP TABLE IF EXISTS admin CASCADE;
 DROP TABLE IF EXISTS countdown CASCADE;
+DROP TABLE IF EXISTS slogan CASCADE;
 DROP TABLE IF EXISTS setting CASCADE;
 
 -- Drop old types if exist
@@ -132,6 +133,16 @@ CREATE TABLE countdown (
 );
 
 CREATE INDEX IF NOT EXISTS idx_countdown_cid ON countdown(cid);
+
+-- ================= Slogan Table =================
+CREATE TABLE slogan (
+    slid SERIAL PRIMARY KEY,
+    cid INT NOT NULL REFERENCES class(cid) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_slogan_cid ON slogan(cid);
 
 -- ================= Setting Table =================
 CREATE TABLE setting (

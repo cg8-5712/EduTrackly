@@ -1,0 +1,3674 @@
+openapi: 3.0.1
+info:
+  title: EduTrackly
+  description: ''
+  version: 1.0.0
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Admin
+    description: Admin management endpoints
+  - name: Admin Class
+    description: Admin-Class assignment endpoints
+  - name: Homework
+    description: Homework management endpoints
+  - name: Class
+    description: Class management endpoints
+  - name: Student
+    description: Student management endpoints
+  - name: Analysis
+    description: Data analysis endpoints
+  - name: System
+    description: System information endpoints
+  - name: Countdown
+    description: Countdown management endpoints
+  - name: Slogan
+    description: Slogan management endpoints
+  - name: Setting
+    description: Class setting endpoints
+paths:
+  /auth:
+    post:
+      summary: Login
+      deprecated: false
+      description: Authenticate admin with password (password identifies the admin account)
+      tags:
+        - Auth
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          headers: {}
+        '400':
+          description: Missing password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 1004
+                message: Password is required
+                timestamp: 1234567890
+          headers: {}
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 1002
+                message: Login failed
+                timestamp: 1234567890
+          headers: {}
+      security: []
+  /homework/get:
+    get:
+      summary: 获取作业
+      deprecated: false
+      description: 获取指定日期作业，日期可选，默认今日
+      tags:
+        - Homework
+      parameters:
+        - name: date
+          in: query
+          description: 8位日期
+          required: false
+          example: 20250823
+          schema:
+            type: integer
+        - name: cid
+          in: query
+          description: 班级
+          required: false
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                    example: 0
+                  message:
+                    type: string
+                    description: 说明
+                  data:
+                    type: object
+                    properties:
+                      cid:
+                        type: integer
+                        description: 班级ID
+                      class_name:
+                        type: string
+                        description: 班级名称
+                      homework_content:
+                        properties:
+                          chinese:
+                            type: string
+                          maths:
+                            type: string
+                          english:
+                            type: string
+                          physics:
+                            type: string
+                          chemistry:
+                            type: string
+                          biology:
+                            type: string
+                          history:
+                            type: string
+                          geography:
+                            type: string
+                          politics:
+                            type: string
+                          others:
+                            type: string
+                        required:
+                          - chinese
+                          - maths
+                          - english
+                          - physics
+                          - chemistry
+                          - biology
+                          - history
+                          - geography
+                          - politics
+                          - others
+                        $ref: '#/components/schemas/homework'
+                      due_date:
+                        type: integer
+                        description: 作业日期 8 位数字
+                    required:
+                      - cid
+                      - class_name
+                      - due_date
+                      - homework_content
+                  timestamp:
+                    type: integer
+                    description: 时间
+                required:
+                  - code
+                  - message
+                  - timestamp
+                  - data
+          headers: {}
+      security: []
+  /homework/list:
+    get:
+      summary: 获取作业列表
+      deprecated: false
+      description: |-
+        获取作业列表，支持分页；
+        可以按cid、起止日期筛选
+        支持 increase 和 decrease
+      tags:
+        - Homework
+      parameters:
+        - name: cid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: endDate
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+            enum:
+              - desc
+              - incs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                size:
+                  type: integer
+              required:
+                - size
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                    example: 0
+                  message:
+                    type: string
+                    description: 说明
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cid:
+                          type: integer
+                          description: 班级ID
+                        class_name:
+                          type: string
+                          description: 班级名称
+                        homework_content:
+                          type: object
+                          properties:
+                            chinese:
+                              type: string
+                            maths:
+                              type: string
+                            english:
+                              type: string
+                            physics:
+                              type: string
+                            chemistry:
+                              type: string
+                            biology:
+                              type: string
+                            history:
+                              type: string
+                            geography:
+                              type: string
+                            politics:
+                              type: string
+                            others:
+                              type: string
+                          required:
+                            - chinese
+                            - maths
+                            - english
+                            - physics
+                            - chemistry
+                            - biology
+                            - history
+                            - geography
+                            - politics
+                            - others
+                        due_date:
+                          type: integer
+                          description: 作业日期
+                      required:
+                        - cid
+                        - class_name
+                        - due_date
+                        - homework_content
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        description: 当前页
+                      size:
+                        type: integer
+                        description: 当前页大小
+                      total:
+                        type: integer
+                        description: 总数据数
+                      pages:
+                        type: integer
+                        description: 总页数
+                    required:
+                      - page
+                      - size
+                      - total
+                      - pages
+                  timestamp:
+                    type: integer
+                    description: 时间
+                required:
+                  - code
+                  - message
+                  - timestamp
+                  - pagination
+                  - data
+          headers: {}
+      security: []
+  /homework/post:
+    post:
+      summary: 创建作业
+      deprecated: false
+      description: ''
+      tags:
+        - Homework
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cid:
+                  type: integer
+                homework_content:
+                  type: object
+                  properties:
+                    chinese:
+                      type: string
+                    maths:
+                      type: string
+                    english:
+                      type: string
+                    physics:
+                      type: string
+                    chemistry:
+                      type: string
+                    biology:
+                      type: string
+                    history:
+                      type: string
+                    geography:
+                      type: string
+                    politics:
+                      type: string
+                    others:
+                      type: string
+                  required:
+                    - chinese
+                    - maths
+                    - english
+                    - physics
+                    - chemistry
+                    - biology
+                    - history
+                    - geography
+                    - politics
+                    - others
+                due_date:
+                  type: integer
+              required:
+                - cid
+                - homework_content
+                - due_date
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                  message:
+                    type: string
+                    description: 信息
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security: []
+  /homework/delete:
+    delete:
+      summary: 删除作业
+      deprecated: false
+      description: |-
+        删除作业
+        需管理员权限
+        传入 cid 和 date
+      tags:
+        - Homework
+      parameters:
+        - name: cid
+          in: query
+          description: 班级
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          description: 日期
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                  message:
+                    type: string
+                    description: 说明
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /class/create:
+    post:
+      summary: 创建班级
+      deprecated: false
+      description: 创建班级 admin 权限 classname 需要
+      tags:
+        - Class
+      parameters:
+        - name: class_name
+          in: query
+          description: class name
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                  message:
+                    type: string
+                    description: 说明
+                  data:
+                    type: object
+                    properties:
+                      cid:
+                        type: integer
+                        description: class id
+                      class_name:
+                        type: string
+                        description: class name
+                      create_time:
+                        type: integer
+                        description: create time
+                    required:
+                      - cid
+                      - class_name
+                      - create_time
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /class/get:
+    get:
+      summary: 获取班级
+      deprecated: false
+      description: 获取班级 cid 或 class_name
+      tags:
+        - Class
+      parameters:
+        - name: cid
+          in: query
+          description: 班级id
+          required: false
+          schema:
+            type: integer
+        - name: class_name
+          in: query
+          description: 班级名称
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                    example: 0
+                  message:
+                    type: string
+                    description: 说明
+                  data:
+                    type: object
+                    properties:
+                      cid:
+                        type: integer
+                        description: 班级ID
+                      class_name:
+                        type: string
+                        description: 班级名称
+                      create_time:
+                        type: integer
+                        description: 创建时间
+                      students:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            sid:
+                              type: integer
+                            student_name:
+                              type: string
+                            attendance:
+                              type: boolean
+                          required:
+                            - sid
+                            - student_name
+                            - attendance
+                    required:
+                      - cid
+                      - class_name
+                      - create_time
+                      - students
+                  timestamp:
+                    type: integer
+                    description: 时间
+                required:
+                  - code
+                  - message
+                  - timestamp
+                  - data
+          headers: {}
+      security: []
+  /class/list:
+    get:
+      summary: 获取班级列表
+      deprecated: false
+      description: |-
+        获取班级列表
+        param order enum acs desc
+        body page size
+      tags:
+        - Class
+      parameters:
+        - name: order
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+            enum:
+              - acs
+              - desc
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                size:
+                  type: integer
+              required:
+                - page
+                - size
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                    example: 0
+                  message:
+                    type: string
+                    description: 说明
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cid:
+                          type: integer
+                          description: 班级ID
+                        class_name:
+                          type: string
+                          description: 班级名称
+                        create_time:
+                          type: integer
+                          description: 创建时间
+                      required:
+                        - cid
+                        - class_name
+                        - create_time
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        description: 当前页
+                      size:
+                        type: integer
+                        description: 当前页大小
+                      total:
+                        type: integer
+                        description: 总数据数
+                      pages:
+                        type: integer
+                        description: 总页数
+                    required:
+                      - page
+                      - size
+                      - total
+                      - pages
+                  timestamp:
+                    type: integer
+                    description: 时间
+                required:
+                  - code
+                  - message
+                  - timestamp
+                  - pagination
+                  - data
+          headers: {}
+      security: []
+  /class/delete:
+    delete:
+      summary: 删除班级
+      deprecated: false
+      description: |-
+        删除班级
+        提供 cid 或 class_name
+      tags:
+        - Class
+      parameters:
+        - name: cid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: class_name
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                  message:
+                    type: string
+                    description: 说明
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /student/add:
+    post:
+      summary: 添加学生
+      deprecated: false
+      description: 添加学生
+      tags:
+        - Student
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  cid:
+                    type: integer
+                  student_name:
+                    type: string
+                  attendance:
+                    type: boolean
+                required:
+                  - student_name
+                  - attendance
+                  - cid
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                  message:
+                    type: string
+                    description: 说明
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /student/get:
+    get:
+      summary: 获取学生信息
+      deprecated: false
+      description: |-
+        获取学生列表
+        sid 或 studnet name
+      tags:
+        - Student
+      parameters:
+        - name: sid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: student_name
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                    example: 0
+                  message:
+                    type: string
+                    description: 说明
+                  data:
+                    type: object
+                    properties:
+                      sid:
+                        type: integer
+                        description: 学生ID
+                      cid:
+                        type: integer
+                        description: 班级ID
+                      student_name:
+                        type: string
+                        description: 学生名称
+                      attendance:
+                        type: boolean
+                      event:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            event_date:
+                              type: integer
+                            event_type:
+                              type: string
+                          required:
+                            - event_date
+                            - event_type
+                    required:
+                      - sid
+                      - cid
+                      - student_name
+                      - event
+                      - attendance
+                  timestamp:
+                    type: integer
+                    description: 时间
+                required:
+                  - code
+                  - message
+                  - timestamp
+                  - data
+          headers: {}
+      security: []
+  /student/list:
+    get:
+      summary: 获取学生列表
+      deprecated: false
+      description: param cid option
+      tags:
+        - Student
+      parameters:
+        - name: cid
+          in: query
+          description: 班级id
+          required: false
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                size:
+                  type: integer
+              required:
+                - page
+                - size
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: 状态
+                    example: 0
+                  message:
+                    type: string
+                    description: 说明
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cid:
+                          type: integer
+                          description: 班级ID
+                        sid:
+                          type: integer
+                        student_name:
+                          type: string
+                          description: 班级名称
+                        attendance:
+                          type: boolean
+                          description: 创建时间
+                      required:
+                        - cid
+                        - student_name
+                        - attendance
+                        - sid
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        description: 当前页
+                      size:
+                        type: integer
+                        description: 当前页大小
+                      total:
+                        type: integer
+                        description: 总数据数
+                      pages:
+                        type: integer
+                        description: 总页数
+                    required:
+                      - page
+                      - size
+                      - total
+                      - pages
+                  timestamp:
+                    type: integer
+                    description: 时间
+                required:
+                  - code
+                  - message
+                  - timestamp
+                  - pagination
+                  - data
+          headers: {}
+      security: []
+  /student/attendance-change:
+    put:
+      summary: 更改出席情况
+      deprecated: false
+      description: 更改attendance
+      tags:
+        - Student
+      parameters:
+        - name: sid
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: attendance
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /student/delete:
+    delete:
+      summary: 删除学生
+      deprecated: false
+      description: |-
+        param sid
+        删除学生
+      tags:
+        - Student
+      parameters:
+        - name: sid
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /student/event:
+    put:
+      summary: 提交历史事件
+      deprecated: false
+      description: 提交学生历史事件（使用当前日期）
+      tags:
+        - Student
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  sid:
+                    type: integer
+                  event_type:
+                    type: string
+                required:
+                  - sid
+                  - event_type
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /student/event/{date}:
+    put:
+      summary: 提交指定日期历史事件
+      deprecated: false
+      description: 提交指定日期的学生历史事件
+      tags:
+        - Student
+      parameters:
+        - name: date
+          in: path
+          description: 8位日期 (YYYYMMDD)
+          required: true
+          example: 20250831
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  sid:
+                    type: integer
+                  event_type:
+                    type: string
+                required:
+                  - sid
+                  - event_type
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /analysis/basic:
+    get:
+      summary: 基本情况
+      deprecated: false
+      description: |-
+        获取今日情况
+        param cid date ( date is option )
+      tags:
+        - Analysis
+      parameters:
+        - name: cid
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      cid:
+                        type: integer
+                      class_name:
+                        type: string
+                      expected_attend:
+                        type: integer
+                      actual_attend:
+                        type: integer
+                      event_list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            student_name:
+                              type: string
+                            event_type:
+                              type: string
+                          required:
+                            - student_name
+                            - event_type
+                        nullable: true
+                      official_cnt:
+                        type: integer
+                      personal_cnt:
+                        type: integer
+                      sick_cnt:
+                        type: integer
+                      temp_cnt:
+                        type: integer
+                    required:
+                      - cid
+                      - class_name
+                      - expected_attend
+                      - actual_attend
+                      - event_list
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /analysis/class:
+    get:
+      summary: 获取班级
+      deprecated: false
+      description: |-
+        获取班级情况
+        param class
+      tags:
+        - Analysis
+      parameters:
+        - name: cid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      cid:
+                        type: integer
+                      class_name:
+                        type: string
+                      expected_attend:
+                        type: integer
+                      student_num:
+                        type: integer
+                      today_actual_attend:
+                        type: integer
+                      daily_attendance_rates:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date:
+                              type: integer
+                            attendance_rate:
+                              type: number
+                          required:
+                            - date
+                            - attendance_rate
+                    required:
+                      - cid
+                      - class_name
+                      - expected_attend
+                      - student_num
+                      - today_actual_attend
+                      - daily_attendance_rates
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security:
+        - bearer: []
+  /analysis/student:
+    get:
+      summary: 获取学生信息
+      deprecated: false
+      description: |-
+        获取学生信息
+        param cid startDate endDate
+      tags:
+        - Analysis
+      parameters:
+        - name: sid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: endDate
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      sid:
+                        type: integer
+                      student_name:
+                        type: string
+                      attendance:
+                        type: boolean
+                      event_time:
+                        type: object
+                        properties:
+                          official_cnt:
+                            type: integer
+                          personal_cnt:
+                            type: integer
+                          sick_cnt:
+                            type: integer
+                          temp_cnt:
+                            type: integer
+                        required:
+                          - official_cnt
+                          - personal_cnt
+                          - sick_cnt
+                          - temp_cnt
+                      event_list:
+                        type: object
+                        properties:
+                          official_list:
+                            type: array
+                            items:
+                              type: string
+                          personal_list:
+                            type: array
+                            items:
+                              type: string
+                          sick_list:
+                            type: array
+                            items:
+                              type: string
+                          temp_list:
+                            type: array
+                            items:
+                              type: integer
+                        required:
+                          - official_list
+                          - personal_list
+                          - sick_list
+                          - temp_list
+                    required:
+                      - sid
+                      - student_name
+                      - attendance
+                      - event_time
+                      - event_list
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - data
+                  - timestamp
+              example:
+                code: 0
+                message: Get students analysis successfully
+                data:
+                  sid: 2
+                  student_name: Bob
+                  attendance: false
+                  event_time:
+                    official_cnt: 0
+                    personal_cnt: 0
+                    sick_cnt: 0
+                    temp_cnt: 3
+                  event_list:
+                    official_list: []
+                    personal_list: []
+                    sick_list: []
+                    temp_list:
+                      - 20250825
+                      - 20250920
+                      - 20251001
+                timestamp: 1759292013667
+          headers: {}
+      security:
+        - bearer: []
+  /system:
+    get:
+      summary: 系统信息
+      deprecated: false
+      description: ''
+      tags:
+        - System
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - code
+                  - message
+                  - data
+                  - timestamp
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: System info retrieved successfully
+                  data:
+                    type: object
+                    required:
+                      - cpu
+                      - memory
+                      - load
+                      - disk
+                      - network
+                      - os
+                    properties:
+                      cpu:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - model
+                            - speed
+                            - usage_percent
+                          properties:
+                            model:
+                              type: string
+                              example: AMD Ryzen 9 6900HS with Radeon Graphics
+                            speed:
+                              type: integer
+                              example: 3294
+                            usage_percent:
+                              type: string
+                              example: '17.49'
+                      memory:
+                        type: object
+                        required:
+                          - total
+                          - free
+                          - usage_percent
+                        properties:
+                          total:
+                            type: integer
+                            example: 33550630912
+                          free:
+                            type: integer
+                            example: 6899228672
+                          usage_percent:
+                            type: string
+                            example: '79.44'
+                      load:
+                        oneOf:
+                          - type: array
+                            items:
+                              type: number
+                            example:
+                              - 0.32
+                              - 0.26
+                              - 0.18
+                          - type: 'null'
+                      disk:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - filesystem
+                            - size
+                            - used
+                            - free
+                            - used_percent
+                            - mount
+                          properties:
+                            filesystem:
+                              type: string
+                              example: C
+                            size:
+                              type: integer
+                              example: 274804838400
+                            used:
+                              type: integer
+                              example: 270273372160
+                            free:
+                              type: integer
+                              example: 4531466240
+                            used_percent:
+                              type: integer
+                              example: 98
+                            mount:
+                              type: string
+                              example: C:\
+                      network:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - interface
+                            - addresses
+                          properties:
+                            interface:
+                              type: string
+                              example: WLAN
+                            addresses:
+                              type: array
+                              items:
+                                type: object
+                                required:
+                                  - family
+                                  - address
+                                  - mac
+                                  - internal
+                                properties:
+                                  family:
+                                    type: string
+                                    example: IPv4
+                                  address:
+                                    type: string
+                                    example: 192.168.1.5
+                                  mac:
+                                    type: string
+                                    example: d8:80:83:cf:af:a9
+                                  internal:
+                                    type: boolean
+                                    example: false
+                      os:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                          platform:
+                            type: string
+                          release:
+                            type: string
+                          arch:
+                            type: string
+                          uptime:
+                            type: number
+                          hostname:
+                            type: string
+                        required:
+                          - type
+                          - platform
+                          - release
+                          - arch
+                          - uptime
+                          - hostname
+                  timestamp:
+                    type: integer
+                    example: 1756462514292
+          headers: {}
+      security:
+        - bearer: []
+  /countdown/create:
+    post:
+      summary: 创建倒计时
+      deprecated: false
+      description: ''
+      tags:
+        - Countdown
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cid:
+                  type: integer
+                content:
+                  type: string
+                deadline:
+                  type: integer
+              required:
+                - cid
+                - content
+                - deadline
+            example:
+              cid: 1
+              content: 期末考试
+              deadline: 20251231
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      cdid:
+                        type: integer
+                      cid:
+                        type: integer
+                      content:
+                        type: string
+                      deadline:
+                        type: integer
+                      created_at:
+                        type: string
+                    required:
+                      - cdid
+                      - cid
+                      - content
+                      - deadline
+                      - created_at
+                required:
+                  - code
+                  - message
+                  - data
+              example:
+                code: 0
+                message: Create countdown successfully
+                data:
+                  cdid: 1
+                  cid: 1
+                  content: 期末考试
+                  deadline: '20251231'
+                  created_at: '2025-11-27T10:00:00.000Z'
+          headers: {}
+      security: []
+  /countdown/get:
+    get:
+      summary: 获取倒计时
+      deprecated: false
+      description: ''
+      tags:
+        - Countdown
+      parameters:
+        - name: cdid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      cdid:
+                        type: integer
+                      cid:
+                        type: integer
+                      class_name:
+                        type: string
+                      content:
+                        type: string
+                      deadline:
+                        type: string
+                      created_at:
+                        type: string
+                    required:
+                      - cdid
+                      - cid
+                      - class_name
+                      - content
+                      - deadline
+                      - created_at
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - data
+                  - timestamp
+              example:
+                code: 0
+                message: Countdown retrieved successfully
+                data:
+                  cdid: 2
+                  cid: 1
+                  class_name: Class1
+                  content: 英语演讲比赛
+                  deadline: '2025-12-19T16:00:00.000Z'
+                  created_at: '2025-11-29T03:02:05.389Z'
+                timestamp: 1764464911749
+          headers: {}
+      security: []
+  /countdown/list:
+    get:
+      summary: 获取倒计时列表
+      deprecated: false
+      description: ''
+      tags:
+        - Countdown
+      parameters:
+        - name: cid
+          in: query
+          description: ''
+          required: false
+          example: 0
+          schema:
+            type: integer
+        - name: deadline
+          in: query
+          description: ''
+          required: false
+          example: 0
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: ''
+          required: false
+          example: ''
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                size:
+                  type: integer
+              required:
+                - size
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cdid:
+                          type: integer
+                        cid:
+                          type: integer
+                        class_name:
+                          type: string
+                        content:
+                          type: string
+                        deadline:
+                          type: string
+                        created_at:
+                          type: string
+                      required:
+                        - cdid
+                        - cid
+                        - class_name
+                        - content
+                        - deadline
+                        - created_at
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      size:
+                        type: integer
+                      total:
+                        type: integer
+                      pages:
+                        type: integer
+                    required:
+                      - page
+                      - size
+                      - total
+                      - pages
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - data
+                  - pagination
+                  - timestamp
+              example:
+                code: 0
+                message: Countdowns retrieved successfully
+                data:
+                  - cdid: 1
+                    cid: 1
+                    class_name: Class1
+                    content: 12月考
+                    deadline: '2025-12-14T16:00:00.000Z'
+                    created_at: '2025-11-29T03:02:05.389Z'
+                  - cdid: 3
+                    cid: 2
+                    class_name: Class2
+                    content: 数学竞赛
+                    deadline: '2025-12-17T16:00:00.000Z'
+                    created_at: '2025-11-29T03:02:05.389Z'
+                  - cdid: 2
+                    cid: 1
+                    class_name: Class1
+                    content: 英语演讲比赛
+                    deadline: '2025-12-19T16:00:00.000Z'
+                    created_at: '2025-11-29T03:02:05.389Z'
+                  - cdid: 5
+                    cid: 1
+                    class_name: Class1
+                    content: 期末考试
+                    deadline: '2025-12-30T16:00:00.000Z'
+                    created_at: '2025-11-29T03:11:49.025Z'
+                  - cdid: 4
+                    cid: 2
+                    class_name: Class2
+                    content: 期末考试
+                    deadline: '2026-01-09T16:00:00.000Z'
+                    created_at: '2025-11-29T03:02:05.389Z'
+                pagination:
+                  page: 1
+                  size: 20
+                  total: 5
+                  pages: 1
+                timestamp: 1764465674570
+          headers: {}
+      security: []
+  /countdown/update:
+    put:
+      summary: 修改倒计时
+      deprecated: false
+      description: ''
+      tags:
+        - Countdown
+      parameters:
+        - name: cdid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                deadline:
+                  type: string
+              required:
+                - content
+                - deadline
+            example:
+              content: 期末考试倒计时-new
+              deadline: '20251231'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      cdid:
+                        type: integer
+                      cid:
+                        type: integer
+                      content:
+                        type: string
+                      deadline:
+                        type: string
+                      created_at:
+                        type: string
+                    required:
+                      - cdid
+                      - cid
+                      - content
+                      - deadline
+                      - created_at
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - data
+                  - timestamp
+              example:
+                code: 0
+                message: Countdown updated successfully
+                data:
+                  cdid: 1
+                  cid: 1
+                  content: 期末考试倒计时-new
+                  deadline: '2025-12-30T16:00:00.000Z'
+                  created_at: '2025-11-29T03:02:05.389Z'
+                timestamp: 1764466029780
+          headers: {}
+      security: []
+  /countdown/delete:
+    delete:
+      summary: 删除倒计时
+      deprecated: false
+      description: ''
+      tags:
+        - Countdown
+      parameters:
+        - name: cdid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - timestamp
+              example:
+                code: 0
+                message: Countdown deleted successfully
+                timestamp: 1764466239930
+          headers: {}
+      security: []
+  /setting/get:
+    get:
+      summary: 获取设置
+      deprecated: false
+      description: ''
+      tags:
+        - Setting
+      parameters:
+        - name: cid
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+      security: []
+  /setting/update:
+    put:
+      summary: 修改设置
+      deprecated: false
+      description: ''
+      tags:
+        - Setting
+      parameters:
+        - name: cid
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_countdown_display:
+                  type: boolean
+                is_slogan_display:
+                  type: boolean
+              required:
+                - is_countdown_display
+                - is_slogan_display
+            examples: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      cid:
+                        type: integer
+                      is_countdown_display:
+                        type: boolean
+                      is_slogan_display:
+                        type: boolean
+                      created_at:
+                        type: string
+                      updated_at:
+                        type: string
+                    required:
+                      - cid
+                      - is_countdown_display
+                      - is_slogan_display
+                      - created_at
+                      - updated_at
+                  timestamp:
+                    type: integer
+                required:
+                  - code
+                  - message
+                  - data
+                  - timestamp
+              example:
+                code: 0
+                message: Setting updated successfully
+                data:
+                  cid: 1
+                  is_countdown_display: true
+                  is_slogan_display: false
+                  created_at: '2025-11-29T19:09:37.614Z'
+                  updated_at: '2025-11-29T20:25:38.649Z'
+                timestamp: 1764476738394
+          headers: {}
+      security:
+        - BearerAuth: []
+  /slogan/create:
+    post:
+      summary: 创建标语
+      deprecated: false
+      description: 为班级创建新的标语
+      tags:
+        - Slogan
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cid:
+                  type: integer
+                  description: 班级ID
+                content:
+                  type: string
+                  description: 标语内容
+              required:
+                - cid
+                - content
+            example:
+              cid: 1
+              content: 好好学习，天天向上
+      responses:
+        '200':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Slogan'
+                  timestamp:
+                    type: integer
+              example:
+                code: 0
+                message: Slogan created successfully
+                data:
+                  slid: 1
+                  cid: 1
+                  content: 好好学习，天天向上
+                  created_at: '2025-11-27T10:00:00.000Z'
+                timestamp: 1764464911749
+        '400':
+          description: 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 班级不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 4001
+                message: Class not found
+                timestamp: 1234567890
+      security:
+        - BearerAuth: []
+  /slogan/get:
+    get:
+      summary: 获取标语
+      deprecated: false
+      description: 根据slid获取单个标语
+      tags:
+        - Slogan
+      parameters:
+        - name: slid
+          in: query
+          description: 标语ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/SloganWithClass'
+                  timestamp:
+                    type: integer
+              example:
+                code: 0
+                message: Slogan retrieved successfully
+                data:
+                  slid: 1
+                  cid: 1
+                  class_name: Class1
+                  content: 好好学习，天天向上
+                  created_at: '2025-11-27T10:00:00.000Z'
+                timestamp: 1764464911749
+        '400':
+          description: 缺少参数
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 标语不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 6101
+                message: Slogan not found
+                timestamp: 1234567890
+      security: []
+  /slogan/list:
+    get:
+      summary: 获取标语列表
+      deprecated: false
+      description: 获取标语列表，支持分页和按班级过滤
+      tags:
+        - Slogan
+      parameters:
+        - name: cid
+          in: query
+          description: 班级ID（可选）
+          required: false
+          example: 1
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: 排序方式
+          required: false
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  default: 1
+                size:
+                  type: integer
+                  default: 20
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SloganWithClass'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  timestamp:
+                    type: integer
+              example:
+                code: 0
+                message: Slogans retrieved successfully
+                data:
+                  - slid: 1
+                    cid: 1
+                    class_name: Class1
+                    content: 好好学习，天天向上
+                    created_at: '2025-11-27T10:00:00.000Z'
+                  - slid: 2
+                    cid: 1
+                    class_name: Class1
+                    content: 团结友爱，互帮互助
+                    created_at: '2025-11-28T10:00:00.000Z'
+                pagination:
+                  page: 1
+                  size: 20
+                  total: 2
+                  pages: 1
+                timestamp: 1764464911749
+      security: []
+  /slogan/update:
+    put:
+      summary: 修改标语
+      deprecated: false
+      description: 修改指定标语的内容
+      tags:
+        - Slogan
+      parameters:
+        - name: slid
+          in: query
+          description: 标语ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: 新的标语内容
+              required:
+                - content
+            example:
+              content: 勤奋学习，勇攀高峰
+      responses:
+        '200':
+          description: 修改成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Slogan'
+                  timestamp:
+                    type: integer
+              example:
+                code: 0
+                message: Slogan updated successfully
+                data:
+                  slid: 1
+                  cid: 1
+                  content: 勤奋学习，勇攀高峰
+                  created_at: '2025-11-27T10:00:00.000Z'
+                timestamp: 1764464911749
+        '400':
+          description: 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 标语不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+  /slogan/delete:
+    delete:
+      summary: 删除标语
+      deprecated: false
+      description: 删除指定的标语
+      tags:
+        - Slogan
+      parameters:
+        - name: slid
+          in: query
+          description: 标语ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: integer
+              example:
+                code: 0
+                message: Slogan deleted successfully
+                timestamp: 1764464911749
+        '400':
+          description: 缺少参数
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 标语不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+  /admin/me:
+    get:
+      summary: Get current admin info
+      deprecated: false
+      description: Get information about the currently logged-in admin
+      tags:
+        - Admin
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/AdminWithClasses'
+                  timestamp:
+                    type: integer
+          headers: {}
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/create:
+    post:
+      summary: Create admin account
+      deprecated: false
+      description: Create a new admin account (Superadmin only)
+      tags:
+        - Admin
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdminRequest'
+        required: true
+      responses:
+        '201':
+          description: Admin created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Admin created successfully
+                  data:
+                    $ref: '#/components/schemas/Admin'
+                  timestamp:
+                    type: integer
+          headers: {}
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 1011
+                message: This action requires superadmin privileges
+                timestamp: 1234567890
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/get:
+    get:
+      summary: Get admin by ID
+      deprecated: false
+      description: Get admin information by admin ID (Superadmin only)
+      tags:
+        - Admin
+      parameters:
+        - name: aid
+          in: query
+          description: Admin ID
+          required: true
+          example: 2
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/AdminWithClasses'
+                  timestamp:
+                    type: integer
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+        '404':
+          description: Admin not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 5001
+                message: Admin not found
+                timestamp: 1234567890
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/list:
+    get:
+      summary: List all admins
+      deprecated: false
+      description: Get paginated list of all admin accounts (Superadmin only)
+      tags:
+        - Admin
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  default: 1
+                  example: 1
+                size:
+                  type: integer
+                  default: 20
+                  example: 20
+                role:
+                  type: string
+                  enum:
+                    - superadmin
+                    - admin
+                  description: Filter by role
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Admin'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  timestamp:
+                    type: integer
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/update:
+    put:
+      summary: Update admin
+      deprecated: false
+      description: Update admin information (Superadmin only)
+      tags:
+        - Admin
+      parameters:
+        - name: aid
+          in: query
+          description: Admin ID to update
+          required: true
+          example: 2
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminRequest'
+        required: true
+      responses:
+        '200':
+          description: Admin updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Admin updated successfully
+                  data:
+                    $ref: '#/components/schemas/Admin'
+                  timestamp:
+                    type: integer
+          headers: {}
+        '400':
+          description: Cannot demote self
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 5005
+                message: Cannot demote your own account
+                timestamp: 1234567890
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+        '404':
+          description: Admin not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/delete:
+    delete:
+      summary: Delete admin
+      deprecated: false
+      description: Delete an admin account (Superadmin only)
+      tags:
+        - Admin
+      parameters:
+        - name: aid
+          in: query
+          description: Admin ID to delete
+          required: true
+          example: 3
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Admin deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Admin deleted successfully
+                  timestamp:
+                    type: integer
+          headers: {}
+        '400':
+          description: Cannot delete self
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 5004
+                message: Cannot delete your own account
+                timestamp: 1234567890
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+        '404':
+          description: Admin not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/class/assign:
+    post:
+      summary: Assign class to admin
+      deprecated: false
+      description: Assign a class to an admin account (Superadmin only)
+      tags:
+        - Admin Class
+      parameters:
+        - name: aid
+          in: query
+          description: Admin ID
+          required: true
+          example: 2
+          schema:
+            type: integer
+        - name: cid
+          in: query
+          description: Class ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: string
+                size:
+                  type: string
+              required:
+                - page
+                - size
+            examples: {}
+      responses:
+        '200':
+          description: Class assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Class assigned successfully
+                  data:
+                    $ref: '#/components/schemas/AdminClassAssignment'
+                  timestamp:
+                    type: integer
+          headers: {}
+        '400':
+          description: Missing parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/class/remove:
+    delete:
+      summary: Remove class from admin
+      deprecated: false
+      description: Remove a class assignment from an admin (Superadmin only)
+      tags:
+        - Admin Class
+      parameters:
+        - name: aid
+          in: query
+          description: Admin ID
+          required: true
+          example: 2
+          schema:
+            type: integer
+        - name: cid
+          in: query
+          description: Class ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Class removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Class removed successfully
+                  timestamp:
+                    type: integer
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 5008
+                message: Assignment not found
+                timestamp: 1234567890
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/class/list:
+    get:
+      summary: Get admin's classes
+      deprecated: false
+      description: Get all classes assigned to an admin (Superadmin only)
+      tags:
+        - Admin Class
+      parameters:
+        - name: aid
+          in: query
+          description: Admin ID
+          required: true
+          example: 2
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssignedClass'
+                  timestamp:
+                    type: integer
+          headers: {}
+        '400':
+          description: Missing admin ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/class/replace:
+    put:
+      summary: Replace admin's classes
+      deprecated: false
+      description: Replace all class assignments for an admin (Superadmin only)
+      tags:
+        - Admin Class
+      parameters:
+        - name: aid
+          in: query
+          description: Admin ID
+          required: true
+          example: 2
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceClassesRequest'
+        required: true
+      responses:
+        '200':
+          description: Classes replaced successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Classes replaced successfully
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      assignedClasses:
+                        type: integer
+                        example: 3
+                  timestamp:
+                    type: integer
+          headers: {}
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          headers: {}
+      security:
+        - BearerAuth: []
+  /admin/rate-limit/list:
+    get:
+      summary: 获取所有速率限制配置
+      deprecated: false
+      description: 获取所有速率限制配置列表（仅超级管理员）
+      tags:
+        - Admin
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RateLimitConfig'
+                  timestamp:
+                    type: integer
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+  /admin/rate-limit/get:
+    get:
+      summary: 获取单个速率限制配置
+      deprecated: false
+      description: 根据key获取单个速率限制配置（仅超级管理员）
+      tags:
+        - Admin
+      parameters:
+        - name: key
+          in: query
+          description: 配置key
+          required: true
+          example: read
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/RateLimitConfig'
+                  timestamp:
+                    type: integer
+        '400':
+          description: Missing key parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 4000
+                message: Config key is required
+                timestamp: 1234567890
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 4004
+                message: Rate limit config not found
+                timestamp: 1234567890
+      security:
+        - BearerAuth: []
+  /admin/rate-limit/create:
+    post:
+      summary: 创建速率限制配置
+      deprecated: false
+      description: 创建新的速率限制配置（仅超级管理员）
+      tags:
+        - Admin
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRateLimitRequest'
+        required: true
+      responses:
+        '201':
+          description: Config created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Rate limit config created successfully
+                  data:
+                    $ref: '#/components/schemas/RateLimitConfig'
+                  timestamp:
+                    type: integer
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Config already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 4009
+                message: Rate limit config with this key already exists
+                timestamp: 1234567890
+      security:
+        - BearerAuth: []
+  /admin/rate-limit/update:
+    put:
+      summary: 更新速率限制配置
+      deprecated: false
+      description: 更新速率限制配置（仅超级管理员）
+      tags:
+        - Admin
+      parameters:
+        - name: key
+          in: query
+          description: 配置key
+          required: true
+          example: read
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRateLimitRequest'
+        required: true
+      responses:
+        '200':
+          description: Config updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Rate limit config updated successfully
+                  data:
+                    $ref: '#/components/schemas/RateLimitConfig'
+                  timestamp:
+                    type: integer
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+  /admin/rate-limit/delete:
+    delete:
+      summary: 删除速率限制配置
+      deprecated: false
+      description: 删除速率限制配置（仅超级管理员）
+      tags:
+        - Admin
+      parameters:
+        - name: key
+          in: query
+          description: 配置key
+          required: true
+          example: custom_key
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Config deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: Rate limit config deleted successfully
+                  timestamp:
+                    type: integer
+        '400':
+          description: Missing key or cannot delete default config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Superadmin required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Config not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+components:
+  schemas:
+    Pet:
+      required:
+        - name
+        - photoUrls
+        - id
+        - category
+        - tags
+        - status
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 宠物ID编号
+        category:
+          $ref: '#/components/schemas/Category'
+          description: 分组
+        name:
+          type: string
+          description: 名称
+          example: doggie
+        photoUrls:
+          type: array
+          items:
+            type: string
+          description: 照片URL
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: 标签
+        status:
+          type: string
+          description: 宠物销售状态
+          enum:
+            - available
+            - pending
+            - sold
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 分组ID编号
+        name:
+          type: string
+          description: 分组名称
+      xml:
+        name: Category
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 标签ID编号
+        name:
+          type: string
+          description: 标签名称
+      xml:
+        name: Tag
+    homework:
+      type: object
+      properties:
+        chinese:
+          type: string
+        maths:
+          type: string
+        english:
+          type: string
+        physics:
+          type: string
+        chemistry:
+          type: string
+        biology:
+          type: string
+        history:
+          type: string
+        geography:
+          type: string
+        politics:
+          type: string
+        others:
+          type: string
+      required:
+        - chinese
+        - maths
+        - english
+        - physics
+        - chemistry
+        - biology
+        - history
+        - geography
+        - politics
+        - others
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: integer
+          description: Unix timestamp in milliseconds
+    LoginRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          example: superadmin123
+    LoginResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: Login successful
+        data:
+          type: object
+          properties:
+            aid:
+              type: integer
+              example: 1
+            role:
+              type: string
+              enum:
+                - superadmin
+                - admin
+              example: superadmin
+            access_token:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIs...
+            expires_in:
+              type: integer
+              example: 3600
+            last_login_time:
+              type: integer
+              example: 1234567890
+            last_login_ip:
+              type: string
+              example: 192.168.1.1
+        timestamp:
+          type: integer
+    Admin:
+      type: object
+      properties:
+        aid:
+          type: integer
+          example: 1
+        role:
+          type: string
+          enum:
+            - superadmin
+            - admin
+          example: admin
+        time:
+          type: string
+          format: date-time
+        ip:
+          type: string
+          example: 192.168.1.1
+    AdminWithClasses:
+      allOf:
+        - $ref: '#/components/schemas/Admin'
+        - type: object
+          properties:
+            classes:
+              type: array
+              description: Assigned classes (null for superadmin)
+              items:
+                $ref: '#/components/schemas/AssignedClass'
+              nullable: true
+    AssignedClass:
+      type: object
+      properties:
+        cid:
+          type: integer
+          example: 1
+        class_name:
+          type: string
+          example: Class1
+        create_time:
+          type: string
+          format: date-time
+        assigned_at:
+          type: string
+          format: date-time
+    CreateAdminRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          minLength: 8
+          example: password123
+        role:
+          type: string
+          enum:
+            - superadmin
+            - admin
+          default: admin
+          example: admin
+    UpdateAdminRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          minLength: 8
+          example: newpassword123
+        role:
+          type: string
+          enum:
+            - superadmin
+            - admin
+          example: admin
+    AdminClassAssignment:
+      type: object
+      properties:
+        aid:
+          type: integer
+          example: 2
+        cid:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+    ReplaceClassesRequest:
+      type: object
+      required:
+        - cids
+      properties:
+        cids:
+          type: array
+          items:
+            type: integer
+          example:
+            - 1
+            - 2
+            - 3
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        size:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 5
+    Slogan:
+      type: object
+      properties:
+        slid:
+          type: integer
+          description: 标语ID
+          example: 1
+        cid:
+          type: integer
+          description: 班级ID
+          example: 1
+        content:
+          type: string
+          description: 标语内容
+          example: 好好学习，天天向上
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+      required:
+        - slid
+        - cid
+        - content
+        - created_at
+    SloganWithClass:
+      type: object
+      properties:
+        slid:
+          type: integer
+          description: 标语ID
+          example: 1
+        cid:
+          type: integer
+          description: 班级ID
+          example: 1
+        class_name:
+          type: string
+          description: 班级名称
+          example: Class1
+        content:
+          type: string
+          description: 标语内容
+          example: 好好学习，天天向上
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+      required:
+        - slid
+        - cid
+        - class_name
+        - content
+        - created_at
+    RateLimitConfig:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 配置唯一标识
+          example: read
+        window_ms:
+          type: integer
+          description: 时间窗口（毫秒）
+          example: 60000
+        max_requests:
+          type: integer
+          description: 最大请求数
+          example: 100
+        description:
+          type: string
+          description: 配置描述
+          example: Read operations rate limit
+        enabled:
+          type: boolean
+          description: 是否启用
+          example: true
+        is_default:
+          type: boolean
+          description: 是否为默认配置
+          example: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - key
+        - window_ms
+        - max_requests
+        - enabled
+    CreateRateLimitRequest:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+          description: 配置唯一标识
+          example: custom_api
+        window_ms:
+          type: integer
+          description: 时间窗口（毫秒），最小1000
+          example: 60000
+        max_requests:
+          type: integer
+          description: 最大请求数，最小1
+          example: 50
+        description:
+          type: string
+          description: 配置描述
+          example: Custom API rate limit
+        enabled:
+          type: boolean
+          description: 是否启用
+          default: true
+    UpdateRateLimitRequest:
+      type: object
+      properties:
+        window_ms:
+          type: integer
+          description: 时间窗口（毫秒），最小1000
+          example: 60000
+        max_requests:
+          type: integer
+          description: 最大请求数，最小1
+          example: 100
+        description:
+          type: string
+          description: 配置描述
+        enabled:
+          type: boolean
+          description: 是否启用
+  responses:
+    记录不存在:
+      description: ''
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+            required:
+              - code
+              - message
+    参数不正确:
+      description: ''
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+            required:
+              - code
+              - message
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    bearer:
+      type: http
+      scheme: bearer
+servers: []
+security: []
