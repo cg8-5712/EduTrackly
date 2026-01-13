@@ -2,6 +2,20 @@
 -- PostgreSQL schema for EduTrackly
 -- =================================
 
+-- ================= Schema Migrations Table =================
+-- This table tracks all applied migrations for version control
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    id SERIAL PRIMARY KEY,
+    version VARCHAR(50) NOT NULL UNIQUE,
+    filename VARCHAR(255) NOT NULL,
+    description VARCHAR(500),
+    checksum VARCHAR(64),
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    execution_time_ms INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_schema_migrations_version ON schema_migrations(version);
+
 -- Drop old tables if exist
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS student CASCADE;

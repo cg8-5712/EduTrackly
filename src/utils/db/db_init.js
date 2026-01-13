@@ -20,6 +20,7 @@ export default async function initializeDatabase() {
         `);
 
     if (result.rows.length === 0) {
+      // First time initialization - run full schema
       logger.info('⏳ Running database migrations (first time)...');
       await migrations.runSchema();
 
@@ -32,7 +33,18 @@ export default async function initializeDatabase() {
 
       logger.info('✅ Database migrations completed');
     } else {
-      logger.info('⚡ Database already initialized, skipping migrations');
+      // Database exists - run automatic migrations for any new migration files
+      logger.info('⏳ Checking for pending migrations...');
+
+      // Check migration integrity first
+      await migrations.checkIntegrity();
+
+      // Run any pending migrations
+      const migrationResult = await migrations.runAutoMigrations();
+
+      if (migrationResult.errors.length > 0) {
+        logger.error('⚠️ Some migrations failed, please check the logs');
+      }
     }
   } catch (error) {
     logger.error('❌ Error initializing database connection:', error.message);
