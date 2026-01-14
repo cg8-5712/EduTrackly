@@ -58,6 +58,10 @@ class DatabaseConnector {
     }
   }
 
+  async connect() {
+    return this.pool.connect();
+  }
+
 
   async transaction(callback) {
     const client = await this.pool.connect();
