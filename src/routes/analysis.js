@@ -1,5 +1,5 @@
 import express from 'express';
-import { getToday, getClassAnalysisController, getStudentsAnalysisController } from '../controllers/analysisController.js';
+import { getToday, getClassAnalysisController, getStudentsAnalysisController, exportClassAttendanceController, exportStudentsAttendanceController } from '../controllers/analysisController.js';
 import jwtRequire, { optionalJwt } from '../middleware/jwt_require.js';
 import { requireClassAccess } from '../middleware/role_require.js';
 import { rateLimiter } from '../middleware/rate_limiter.js';
@@ -14,5 +14,11 @@ router.get('/class', jwtRequire, requireClassAccess({ cidSource: 'query' }), rat
 
 // Student analysis - optionalJwt for role-based filtering
 router.get('/student', optionalJwt, rateLimiter('read'), getStudentsAnalysisController);
+
+// Export class attendance to Excel - require admin/superadmin and class access
+router.get('/export/class', jwtRequire, requireClassAccess({ cidSource: 'query' }), rateLimiter('write'), exportClassAttendanceController);
+
+// Export students attendance to Excel - require admin/superadmin
+router.get('/export/students', jwtRequire, rateLimiter('write'), exportStudentsAttendanceController);
 
 export default router;

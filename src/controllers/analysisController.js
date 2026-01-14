@@ -1,4 +1,4 @@
-import { getTodayAnalysis, getClassAnalysis, getStudentsAnalysis } from '../services/analysis.js';
+import { getTodayAnalysis, getClassAnalysis, getStudentsAnalysis, exportClassAttendance, exportStudentsAttendance } from '../services/analysis.js';
 import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { handleControllerError } from '../middleware/error_handler.js';
@@ -184,6 +184,183 @@ export async function getStudentsAnalysisController(req, res) {
         stack: error.stack
       },
       sid,
+      startDate,
+      endDate
+    });
+
+    handleControllerError(error, res, req);
+  }
+}
+
+/**
+ * Export class attendance data to Excel
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function exportClassAttendanceController(req, res) {
+  const { cid, startDate, endDate } = req.query;
+  logger.debug('Export class attendance requested', { cid, startDate, endDate });
+
+  try {
+    // Validate required parameters
+    if (!cid) {
+      logger.warn('Missing cid in export class attendance request');
+      return res.status(400).json({
+        ...ErrorCodes.ParamsErrors.REQUIRE_CID,
+        timestamp: Date.now()
+      });
+    }
+
+    if (!startDate || !endDate) {
+      logger.warn('Missing date range in export class attendance request');
+      return res.status(400).json({
+        code: 1001,
+        message: '开始日期和结束日期为必填项',
+        timestamp: Date.now()
+      });
+    }
+
+    // Validate date format (YYYYMMDD)
+    const dateRegex = /^\d{8}$/;
+    if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      logger.warn('Invalid date format in export class attendance request');
+      return res.status(400).json({
+        code: 1002,
+        message: '日期格式必须为YYYYMMDD',
+        timestamp: Date.now()
+      });
+    }
+
+    // Check admin access to this class
+    if (req.role === 'admin') {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Export class attendance access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
+
+    logger.info(`Exporting attendance for class ${cid} from ${startDate} to ${endDate}`);
+    const result = await exportClassAttendance(parseInt(cid), startDate, endDate);
+
+    // Set response headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(result.filename)}`);
+    res.setHeader('Content-Length', result.buffer.length);
+
+    logger.info(`Successfully exported attendance for class ${cid}`);
+    res.send(result.buffer);
+
+  } catch (error) {
+    logger.error('Failed to export class attendance', {
+      error: {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        stack: error.stack
+      },
+      cid,
+      startDate,
+      endDate
+    });
+
+    handleControllerError(error, res, req);
+  }
+}
+
+/**
+ * Export students attendance data to Excel
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function exportStudentsAttendanceController(req, res) {
+  const { sids, startDate, endDate } = req.query;
+  logger.debug('Export students attendance requested', { sids, startDate, endDate });
+
+  try {
+    // Validate required parameters
+    if (!sids) {
+      logger.warn('Missing sids in export students attendance request');
+      return res.status(400).json({
+        code: 1003,
+        message: '学生ID列表为必填项',
+        timestamp: Date.now()
+      });
+    }
+
+    if (!startDate || !endDate) {
+      logger.warn('Missing date range in export students attendance request');
+      return res.status(400).json({
+        code: 1001,
+        message: '开始日期和结束日期为必填项',
+        timestamp: Date.now()
+      });
+    }
+
+    // Validate date format (YYYYMMDD)
+    const dateRegex = /^\d{8}$/;
+    if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      logger.warn('Invalid date format in export students attendance request');
+      return res.status(400).json({
+        code: 1002,
+        message: '日期格式必须为YYYYMMDD',
+        timestamp: Date.now()
+      });
+    }
+
+    // Parse sids string to array of integers
+    const sidArray = sids.split(',').map(s => parseInt(s.trim(), 10)).filter(s => !isNaN(s));
+    if (sidArray.length === 0) {
+      logger.warn('No valid student IDs provided');
+      return res.status(400).json({
+        code: 1004,
+        message: '学生ID格式无效',
+        timestamp: Date.now()
+      });
+    }
+
+    // Check admin access - need to verify access to the students' class
+    if (req.role === 'admin') {
+      const studentQuery = 'SELECT DISTINCT cid FROM student WHERE sid = ANY($1)';
+      const studentResult = await db.query(studentQuery, [sidArray]);
+
+      if (studentResult.rows.length > 0) {
+        for (const row of studentResult.rows) {
+          const hasAccess = await hasClassAccess(req.aid, row.cid, req.role);
+          if (!hasAccess) {
+            logger.warn('Export students attendance access denied', { aid: req.aid, cid: row.cid });
+            return res.status(403).json({
+              ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+              timestamp: Date.now()
+            });
+          }
+        }
+      }
+    }
+
+    logger.info(`Exporting attendance for ${sidArray.length} students from ${startDate} to ${endDate}`);
+    const result = await exportStudentsAttendance(sidArray, startDate, endDate);
+
+    // Set response headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(result.filename)}`);
+    res.setHeader('Content-Length', result.buffer.length);
+
+    logger.info(`Successfully exported attendance for ${sidArray.length} students`);
+    res.send(result.buffer);
+
+  } catch (error) {
+    logger.error('Failed to export students attendance', {
+      error: {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        stack: error.stack
+      },
+      sids,
       startDate,
       endDate
     });
