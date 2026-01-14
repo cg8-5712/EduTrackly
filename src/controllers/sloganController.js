@@ -123,8 +123,7 @@ export async function getSlogan(req, res) {
  */
 export async function listSlogans(req, res) {
   try {
-    const { cid, order = 'desc' } = req.query;
-    const { page = 1, size = 20 } = req.body;
+    const { cid, order = 'desc', page = 1, size = 20 } = req.query;
     logger.debug('Received listSlogans request', { cid, order, page, size });
 
     // Admin access check

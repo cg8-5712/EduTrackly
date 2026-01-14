@@ -137,8 +137,7 @@ export async function getClassController(req, res) {
  * @param {Object} res - Express response object
  */
 export async function listClass(req, res) {
-  const { order = 'asc' } = req.query;
-  const { page = 1, size = 20 } = req.body;
+  const { order = 'asc', page = 1, size = 20 } = req.query;
 
   logger.debug('List classes request received', { order, page, size });
 

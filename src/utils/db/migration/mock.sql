@@ -2,6 +2,12 @@
 -- Seed data for EduTrackly
 -- =================================
 
+-- Class (must be inserted before students and homework due to foreign key constraints)
+INSERT INTO class (class_name) VALUES
+    ('Class1'),
+    ('Class2'),
+    ('Class3');
+
 -- Admin (passwords are hashed with bcrypt)
 -- admin 1 (superadmin): password=superadmin123
 -- admin 2 (admin): password=admin123
@@ -10,12 +16,6 @@ INSERT INTO admin (password, role, ip) VALUES
     ('$2b$10$VWpOb4113snJvxPTFC/t8esHagugnLIe0vwSUK2ZXRaezEZFii6r2', 'superadmin', '192.168.1.1'),
     ('$2b$10$BERJ8htf0Puq3sgoBstXf.7kk80jL.ksd1t4EmIIV2vDYQ9dTE/Re', 'admin', '192.168.1.2'),
     ('$2b$10$/iKNb0/G4zGKbYO/pOHH4.52c.nv8i2J32D1RynQ8bboXGLGLcPIy', 'admin', '192.168.1.3');
-
--- Class (must be inserted before students and homework due to foreign key constraints)
-INSERT INTO class (class_name) VALUES
-    ('Class1'),
-    ('Class2'),
-    ('Class3');
 
 -- Admin-Class assignments
 -- admin 2 (aid=2) can manage Class1 (cid=1) and Class2 (cid=2)
@@ -63,9 +63,18 @@ INSERT INTO attendance (sid, event_date, event_type) VALUES
 
 -- Countdown (cid references class table)
 INSERT INTO countdown (cid, content, deadline) VALUES
-    (1, '12月考', '2025-12-15'),
-    (1, '英语演讲比赛', '2025-12-20'),
-    (2, '数学竞赛', '2025-12-18'),
-    (2, '期末考试', '2026-01-10'),
-    (3, '物理实验', '2025-12-22'),
-    (3, '元旦晚会', '2026-01-01');
+    (1, '期末考试', '2026-01-20'),
+    (1, '英语演讲比赛', '2026-02-15'),
+    (2, '数学竞赛', '2026-01-25'),
+    (2, '寒假开始', '2026-02-01'),
+    (3, '物理实验', '2026-01-18'),
+    (3, '春节', '2026-01-29');
+
+-- Slogan (cid references class table)
+INSERT INTO slogan (cid, content) VALUES
+    (1, '今天的努力，明天的辉煌！'),
+    (1, '书山有路勤为径，学海无涯苦作舟'),
+    (2, '知识改变命运，努力成就未来'),
+    (2, '自信自律，求实创新'),
+    (3, '勤奋学习，追求卓越'),
+    (3, '团结互助，共同进步');

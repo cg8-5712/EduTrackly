@@ -132,8 +132,7 @@ export async function getCountdown(req, res) {
  */
 export async function listCountdowns(req, res) {
   try {
-    const { cid, deadline, order = 'desc' } = req.query;
-    const { page = 1, size = 20 } = req.body;
+    const { cid, deadline, order = 'desc', page = 1, size = 20 } = req.query;
     logger.debug('Received listCountdowns request', { cid, deadline, order, page, size });
 
     // 普通管理员权限检查

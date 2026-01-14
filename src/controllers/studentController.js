@@ -136,8 +136,7 @@ export async function getStudentController(req, res) {
  */
 export async function getStudentlistController(req, res) {
   try {
-    const { cid } = req.query;
-    let { page, size } = req.body;
+    let { cid, page, size } = req.query;
 
     logger.debug('Received listStudents request', { cid, page, size });
 
