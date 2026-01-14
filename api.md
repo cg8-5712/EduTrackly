@@ -1204,6 +1204,195 @@
 
 ---
 
+### GET /analysis/export/class - 导出班级出勤数据Excel
+
+| 权限要求 | superadmin / admin |
+|---------|-------------------|
+
+导出指定班级在指定时间段内的出勤数据，返回 Excel 文件直接下载。
+
+**Query 参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| cid | integer | 是 | 班级ID |
+| startDate | integer | 是 | 起始日期（8位 YYYYMMDD） |
+| endDate | integer | 是 | 结束日期（8位 YYYYMMDD） |
+
+**权限说明**
+
+| 角色 | 可操作范围 |
+|------|-----------|
+| superadmin | 所有班级 |
+| admin | 仅分配的班级 |
+
+**成功响应 (200)**
+
+- Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+- Content-Disposition: `attachment; filename="class_{cid}_attendance_{startDate}_{endDate}.xlsx"`
+- 返回 Excel 文件流，浏览器自动触发下载
+
+**Excel 文件内容**
+
+| Sheet | 内容 |
+|-------|------|
+| 班级概览 | 班级基本信息汇总 |
+| 每日出勤统计 | 每日出勤明细数据 |
+| 请假明细 | 每日请假人员详情 |
+
+**Sheet 1: 班级概览**
+
+| 列名 | 说明 |
+|------|------|
+| 班级ID | cid |
+| 班级名称 | class_name |
+| 统计起始日期 | startDate |
+| 统计结束日期 | endDate |
+| 总天数 | 统计天数 |
+| 学生总数 | student_num |
+| 应到总人次 | expected_attend × 天数 |
+| 实到总人次 | 实际出勤人次汇总 |
+| 平均出勤率 | 总体出勤率百分比 |
+
+**Sheet 2: 每日出勤统计**
+
+| 列名 | 说明 |
+|------|------|
+| 日期 | YYYY-MM-DD 格式 |
+| 应到人数 | expected_attend |
+| 实到人数 | actual_attend |
+| 出勤率 | 百分比 |
+| 公假人数 | official_cnt |
+| 事假人数 | personal_cnt |
+| 病假人数 | sick_cnt |
+| 临时请假人数 | temp_cnt |
+| 临时参加人数 | temp_attend_cnt（非常驻学生临时出勤） |
+
+**Sheet 3: 请假明细**
+
+| 列名 | 说明 |
+|------|------|
+| 日期 | YYYY-MM-DD 格式 |
+| 学生姓名 | student_name |
+| 学生ID | sid |
+| 事件类型 | official/personal/sick/temp |
+| 事件类型说明 | 公假/事假/病假/临时请假 |
+| 备注 | 临时参加标记为"临时出勤" |
+
+**错误响应**
+
+| 状态码 | code | message |
+|--------|------|---------|
+| 400 | 4000 | Class ID is required |
+| 400 | 4000 | Start date is required |
+| 400 | 4000 | End date is required |
+| 400 | 4000 | Invalid date range (startDate must be before endDate) |
+| 401 | 1001 | Unauthorized |
+| 403 | 1003 | No permission to access this class |
+| 404 | 4001 | Class not found |
+
+**请求示例**
+
+```
+GET /analysis/export/class?cid=1&startDate=20250901&endDate=20250930
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+---
+
+### GET /analysis/export/students - 导出学生出勤数据Excel
+
+| 权限要求 | superadmin / admin |
+|---------|-------------------|
+
+导出指定学生（必须同班级）在指定时间段内的出勤数据，返回 Excel 文件直接下载。每个学生一张 Sheet（以学生姓名命名）。
+
+**Query 参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| sids | string | 是 | 学生ID列表，逗号分隔，如 "1,2,3" |
+| startDate | integer | 是 | 起始日期（8位 YYYYMMDD） |
+| endDate | integer | 是 | 结束日期（8位 YYYYMMDD） |
+
+**权限说明**
+
+| 角色 | 可操作范围 |
+|------|-----------|
+| superadmin | 所有学生 |
+| admin | 仅分配班级的学生 |
+
+**约束条件**
+
+- 所选学生必须属于同一个班级
+- 日期范围必须有效（startDate ≤ endDate）
+- 至少选择一个学生
+
+**成功响应 (200)**
+
+- Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+- Content-Disposition: `attachment; filename="students_attendance_{startDate}_{endDate}.xlsx"`
+- 返回 Excel 文件流，浏览器自动触发下载
+
+**Excel 文件结构**
+
+每个学生一张 Sheet，Sheet 名称为学生姓名（如有重名则加序号）
+
+**每个 Sheet 内容**
+
+| 列名 | 说明 |
+|------|------|
+| 日期 | YYYY-MM-DD 格式 |
+| 星期 | 周一/周二/.../周日 |
+| 是否出勤 | 是/否 |
+| 未出勤原因 | 空/公假/事假/病假/临时请假 |
+| 备注 | 其他说明信息 |
+
+**Sheet 示例（学生: 张三）**
+
+| 日期 | 星期 | 是否出勤 | 未出勤原因 | 备注 |
+|------|------|---------|-----------|------|
+| 2025-09-01 | 周一 | 是 | | |
+| 2025-09-02 | 周二 | 是 | | |
+| 2025-09-03 | 周三 | 否 | 病假 | |
+| 2025-09-04 | 周四 | 是 | | |
+| 2025-09-05 | 周五 | 否 | 事假 | |
+
+**Sheet 底部汇总行**
+
+| 统计项 | 值 |
+|--------|-----|
+| 统计天数 | N 天 |
+| 出勤天数 | X 天 |
+| 缺勤天数 | Y 天 |
+| 出勤率 | XX.XX% |
+| 公假次数 | A 次 |
+| 事假次数 | B 次 |
+| 病假次数 | C 次 |
+| 临时请假次数 | D 次 |
+
+**错误响应**
+
+| 状态码 | code | message |
+|--------|------|---------|
+| 400 | 4000 | Student IDs are required |
+| 400 | 4000 | Start date is required |
+| 400 | 4000 | End date is required |
+| 400 | 4000 | Invalid date range (startDate must be before endDate) |
+| 400 | 4000 | Selected students must be from the same class |
+| 401 | 1001 | Unauthorized |
+| 403 | 1003 | No permission to access these students |
+| 404 | 3001 | One or more students not found |
+
+**请求示例**
+
+```
+GET /analysis/export/students?sids=1,2,3&startDate=20250901&endDate=20250930
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+---
+
 ## 9. System 模块（系统信息）
 
 ### GET /system - 系统信息
@@ -1735,6 +1924,8 @@
 | GET /analysis/basic | ✓ | ✓ | ✓ |
 | GET /analysis/class | ✗ | ✓ | ✓ |
 | GET /analysis/student | ✗ | ✓ | ✓ |
+| GET /analysis/export/class | ✗ | ✓* | ✓ |
+| GET /analysis/export/students | ✗ | ✓* | ✓ |
 | **System** |
 | GET /system | ✗ | ✓ | ✓ |
 | **Countdown** |

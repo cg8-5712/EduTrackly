@@ -1395,6 +1395,230 @@ paths:
           headers: {}
       security:
         - bearer: []
+  /analysis/export/class:
+    get:
+      summary: 导出班级出勤数据Excel
+      deprecated: false
+      description: |-
+        导出指定班级在指定时间段内的出勤数据，返回Excel文件直接下载。
+        Excel包含三个Sheet：班级概览、每日出勤统计、请假明细。
+        需要 admin 或 superadmin 权限，admin 只能导出分配的班级。
+      tags:
+        - Analysis
+      parameters:
+        - name: cid
+          in: query
+          description: 班级ID
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          description: 起始日期（8位 YYYYMMDD）
+          required: true
+          example: 20250901
+          schema:
+            type: integer
+        - name: endDate
+          in: query
+          description: 结束日期（8位 YYYYMMDD）
+          required: true
+          example: 20250930
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Excel文件下载
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: 附件下载文件名
+              schema:
+                type: string
+                example: attachment; filename="class_1_attendance_20250901_20250930.xlsx"
+        '400':
+          description: 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingCid:
+                  summary: 缺少班级ID
+                  value:
+                    code: 4000
+                    message: Class ID is required
+                    timestamp: 1234567890
+                missingStartDate:
+                  summary: 缺少起始日期
+                  value:
+                    code: 4000
+                    message: Start date is required
+                    timestamp: 1234567890
+                missingEndDate:
+                  summary: 缺少结束日期
+                  value:
+                    code: 4000
+                    message: End date is required
+                    timestamp: 1234567890
+                invalidDateRange:
+                  summary: 日期范围无效
+                  value:
+                    code: 4000
+                    message: Invalid date range (startDate must be before endDate)
+                    timestamp: 1234567890
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 1001
+                message: Unauthorized
+                timestamp: 1234567890
+        '403':
+          description: 无权限访问该班级
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 1003
+                message: No permission to access this class
+                timestamp: 1234567890
+        '404':
+          description: 班级不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 4001
+                message: Class not found
+                timestamp: 1234567890
+      security:
+        - bearer: []
+  /analysis/export/students:
+    get:
+      summary: 导出学生出勤数据Excel
+      deprecated: false
+      description: |-
+        导出指定学生（必须同班级）在指定时间段内的出勤数据，返回Excel文件直接下载。
+        每个学生一张Sheet（以学生姓名命名），包含每日出勤情况和汇总统计。
+        需要 admin 或 superadmin 权限，admin 只能导出分配班级的学生。
+      tags:
+        - Analysis
+      parameters:
+        - name: sids
+          in: query
+          description: 学生ID列表，逗号分隔
+          required: true
+          example: "1,2,3"
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          description: 起始日期（8位 YYYYMMDD）
+          required: true
+          example: 20250901
+          schema:
+            type: integer
+        - name: endDate
+          in: query
+          description: 结束日期（8位 YYYYMMDD）
+          required: true
+          example: 20250930
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Excel文件下载
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: 附件下载文件名
+              schema:
+                type: string
+                example: attachment; filename="students_attendance_20250901_20250930.xlsx"
+        '400':
+          description: 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingSids:
+                  summary: 缺少学生ID
+                  value:
+                    code: 4000
+                    message: Student IDs are required
+                    timestamp: 1234567890
+                missingStartDate:
+                  summary: 缺少起始日期
+                  value:
+                    code: 4000
+                    message: Start date is required
+                    timestamp: 1234567890
+                missingEndDate:
+                  summary: 缺少结束日期
+                  value:
+                    code: 4000
+                    message: End date is required
+                    timestamp: 1234567890
+                invalidDateRange:
+                  summary: 日期范围无效
+                  value:
+                    code: 4000
+                    message: Invalid date range (startDate must be before endDate)
+                    timestamp: 1234567890
+                differentClasses:
+                  summary: 学生不在同一班级
+                  value:
+                    code: 4000
+                    message: Selected students must be from the same class
+                    timestamp: 1234567890
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 1001
+                message: Unauthorized
+                timestamp: 1234567890
+        '403':
+          description: 无权限访问这些学生
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 1003
+                message: No permission to access these students
+                timestamp: 1234567890
+        '404':
+          description: 学生不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 3001
+                message: One or more students not found
+                timestamp: 1234567890
+      security:
+        - bearer: []
   /system:
     get:
       summary: 系统信息
