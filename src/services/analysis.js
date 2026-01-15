@@ -612,3 +612,104 @@ export async function exportStudentsAttendance(sids, startDate, endDate) {
     filename: `学生出勤统计_${startDate}_${endDate}.xlsx`
   };
 }
+
+/**
+ * Export homework data to Excel
+ * @param {number} cid Class ID
+ * @param {string} startDate Start date YYYYMMDD
+ * @param {string} endDate End date YYYYMMDD
+ * @returns {Buffer} Excel file buffer
+ */
+export async function exportHomework(cid, startDate, endDate) {
+  // Check if class exists
+  const classRes = await db.query('SELECT cid, class_name FROM class WHERE cid = $1 LIMIT 1', [cid]);
+  if (classRes.rows.length === 0) {
+    logger.warn(`CID ${cid} does not exist in class table`);
+    throw ClassErrors.NOT_FOUND;
+  }
+  const classInfo = classRes.rows[0];
+
+  const sqlStartDate = formatDatefromyyyymmddtopsqldate(startDate);
+  const sqlEndDate = formatDatefromyyyymmddtopsqldate(endDate);
+
+  // Get homework data
+  const homeworkRes = await db.query(`
+    SELECT
+      due_date,
+      chinese,
+      math,
+      english,
+      physics,
+      chemistry,
+      biology,
+      history,
+      geography,
+      politics,
+      other
+    FROM homework
+    WHERE cid = $1 AND due_date BETWEEN $2 AND $3
+    ORDER BY due_date
+  `, [cid, sqlStartDate, sqlEndDate]);
+
+  // Create Excel workbook
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'EduTrackly';
+  workbook.created = new Date();
+
+  // Sheet 1: 班级概览 (Class Overview)
+  const overviewSheet = workbook.addWorksheet('班级概览');
+  overviewSheet.columns = [
+    { header: '项目', key: 'item', width: 20 },
+    { header: '内容', key: 'value', width: 30 }
+  ];
+  overviewSheet.addRows([
+    { item: '班级ID', value: classInfo.cid },
+    { item: '班级名称', value: classInfo.class_name },
+    { item: '统计开始日期', value: startDate },
+    { item: '统计结束日期', value: endDate },
+    { item: '作业记录数', value: homeworkRes.rows.length }
+  ]);
+  overviewSheet.getRow(1).font = { bold: true };
+  overviewSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+
+  // Sheet 2: 作业列表 (Homework List)
+  const homeworkSheet = workbook.addWorksheet('作业列表');
+  homeworkSheet.columns = [
+    { header: '日期', key: 'date', width: 12 },
+    { header: '语文', key: 'chinese', width: 30 },
+    { header: '数学', key: 'math', width: 30 },
+    { header: '英语', key: 'english', width: 30 },
+    { header: '物理', key: 'physics', width: 30 },
+    { header: '化学', key: 'chemistry', width: 30 },
+    { header: '生物', key: 'biology', width: 30 },
+    { header: '历史', key: 'history', width: 30 },
+    { header: '地理', key: 'geography', width: 30 },
+    { header: '政治', key: 'politics', width: 30 },
+    { header: '其他', key: 'other', width: 30 }
+  ];
+
+  for (const row of homeworkRes.rows) {
+    homeworkSheet.addRow({
+      date: formatDatefromsqldatetoyyyymmdd(row.due_date),
+      chinese: row.chinese || '',
+      math: row.math || '',
+      english: row.english || '',
+      physics: row.physics || '',
+      chemistry: row.chemistry || '',
+      biology: row.biology || '',
+      history: row.history || '',
+      geography: row.geography || '',
+      politics: row.politics || '',
+      other: row.other || ''
+    });
+  }
+  homeworkSheet.getRow(1).font = { bold: true };
+  homeworkSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+
+  // Generate buffer
+  const buffer = await workbook.xlsx.writeBuffer();
+  return {
+    buffer,
+    filename: `${classInfo.class_name}_作业列表_${startDate}_${endDate}.xlsx`
+  };
+}

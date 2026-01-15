@@ -1393,6 +1393,88 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 
 ---
 
+### GET /analysis/export/homework - 导出作业数据Excel
+
+| 权限要求 | superadmin / admin |
+|---------|-------------------|
+
+导出指定班级在指定时间段内的作业数据，返回 Excel 文件直接下载。
+
+**Query 参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| cid | integer | 是 | 班级ID |
+| startDate | integer | 是 | 起始日期（8位 YYYYMMDD） |
+| endDate | integer | 是 | 结束日期（8位 YYYYMMDD） |
+
+**权限说明**
+
+| 角色 | 可操作范围 |
+|------|-----------|
+| superadmin | 所有班级 |
+| admin | 仅分配的班级 |
+
+**成功响应 (200)**
+
+- Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+- Content-Disposition: `attachment; filename="{class_name}_作业列表_{startDate}_{endDate}.xlsx"`
+- 返回 Excel 文件流，浏览器自动触发下载
+
+**Excel 文件内容**
+
+| Sheet | 内容 |
+|-------|------|
+| 班级概览 | 班级基本信息汇总 |
+| 作业列表 | 每日作业详细内容 |
+
+**Sheet 1: 班级概览**
+
+| 列名 | 说明 |
+|------|------|
+| 班级ID | cid |
+| 班级名称 | class_name |
+| 统计开始日期 | startDate |
+| 统计结束日期 | endDate |
+| 作业记录数 | 时间段内的作业条数 |
+
+**Sheet 2: 作业列表**
+
+| 列名 | 说明 |
+|------|------|
+| 日期 | YYYYMMDD 格式 |
+| 语文 | 语文作业内容 |
+| 数学 | 数学作业内容 |
+| 英语 | 英语作业内容 |
+| 物理 | 物理作业内容 |
+| 化学 | 化学作业内容 |
+| 生物 | 生物作业内容 |
+| 历史 | 历史作业内容 |
+| 地理 | 地理作业内容 |
+| 政治 | 政治作业内容 |
+| 其他 | 其他作业内容 |
+
+**错误响应**
+
+| 状态码 | code | message |
+|--------|------|---------|
+| 400 | 4000 | Class ID is required |
+| 400 | 4000 | Start date is required |
+| 400 | 4000 | End date is required |
+| 400 | 4000 | Invalid date format (must be YYYYMMDD) |
+| 401 | 1001 | Unauthorized |
+| 403 | 1003 | No permission to access this class |
+| 404 | 4001 | Class not found |
+
+**请求示例**
+
+```
+GET /analysis/export/homework?cid=1&startDate=20250901&endDate=20250930
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+---
+
 ## 9. System 模块（系统信息）
 
 ### GET /system - 系统信息
@@ -1926,6 +2008,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 | GET /analysis/student | ✗ | ✓ | ✓ |
 | GET /analysis/export/class | ✗ | ✓* | ✓ |
 | GET /analysis/export/students | ✗ | ✓* | ✓ |
+| GET /analysis/export/homework | ✗ | ✓* | ✓ |
 | **System** |
 | GET /system | ✗ | ✓ | ✓ |
 | **Countdown** |

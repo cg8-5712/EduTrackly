@@ -1,5 +1,5 @@
 import express from 'express';
-import { getToday, getClassAnalysisController, getStudentsAnalysisController, exportClassAttendanceController, exportStudentsAttendanceController } from '../controllers/analysisController.js';
+import { getToday, getClassAnalysisController, getStudentsAnalysisController, exportClassAttendanceController, exportStudentsAttendanceController, exportHomeworkController } from '../controllers/analysisController.js';
 import jwtRequire, { optionalJwt } from '../middleware/jwt_require.js';
 import { requireClassAccess } from '../middleware/role_require.js';
 import { rateLimiter } from '../middleware/rate_limiter.js';
@@ -20,5 +20,8 @@ router.get('/export/class', jwtRequire, requireClassAccess({ cidSource: 'query' 
 
 // Export students attendance to Excel - require admin/superadmin
 router.get('/export/students', jwtRequire, rateLimiter('write'), exportStudentsAttendanceController);
+
+// Export homework to Excel - require admin/superadmin and class access
+router.get('/export/homework', jwtRequire, requireClassAccess({ cidSource: 'query' }), rateLimiter('write'), exportHomeworkController);
 
 export default router;

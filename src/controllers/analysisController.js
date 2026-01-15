@@ -1,4 +1,4 @@
-import { getTodayAnalysis, getClassAnalysis, getStudentsAnalysis, exportClassAttendance, exportStudentsAttendance } from '../services/analysis.js';
+import { getTodayAnalysis, getClassAnalysis, getStudentsAnalysis, exportClassAttendance, exportStudentsAttendance, exportHomework } from '../services/analysis.js';
 import logger from '../middleware/loggerMiddleware.js';
 import * as ErrorCodes from '../config/errorCodes.js';
 import { handleControllerError } from '../middleware/error_handler.js';
@@ -361,6 +361,85 @@ export async function exportStudentsAttendanceController(req, res) {
         stack: error.stack
       },
       sids,
+      startDate,
+      endDate
+    });
+
+    handleControllerError(error, res, req);
+  }
+}
+
+/**
+ * Export homework data to Excel
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function exportHomeworkController(req, res) {
+  const { cid, startDate, endDate } = req.query;
+  logger.debug('Export homework requested', { cid, startDate, endDate });
+
+  try {
+    // Validate required parameters
+    if (!cid) {
+      logger.warn('Missing cid in export homework request');
+      return res.status(400).json({
+        ...ErrorCodes.ParamsErrors.REQUIRE_CID,
+        timestamp: Date.now()
+      });
+    }
+
+    if (!startDate || !endDate) {
+      logger.warn('Missing date range in export homework request');
+      return res.status(400).json({
+        code: 1001,
+        message: '开始日期和结束日期为必填项',
+        timestamp: Date.now()
+      });
+    }
+
+    // Validate date format (YYYYMMDD)
+    const dateRegex = /^\d{8}$/;
+    if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      logger.warn('Invalid date format in export homework request');
+      return res.status(400).json({
+        code: 1002,
+        message: '日期格式必须为YYYYMMDD',
+        timestamp: Date.now()
+      });
+    }
+
+    // Check admin access to this class
+    if (req.role === 'admin') {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Export homework access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
+
+    logger.info(`Exporting homework for class ${cid} from ${startDate} to ${endDate}`);
+    const result = await exportHomework(parseInt(cid), startDate, endDate);
+
+    // Set response headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(result.filename)}`);
+    res.setHeader('Content-Length', result.buffer.length);
+
+    logger.info(`Successfully exported homework for class ${cid}`);
+    res.send(result.buffer);
+
+  } catch (error) {
+    logger.error('Failed to export homework', {
+      error: {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        stack: error.stack
+      },
+      cid,
       startDate,
       endDate
     });
