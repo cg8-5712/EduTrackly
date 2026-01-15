@@ -371,8 +371,7 @@ export async function exportClassAttendance(cid, startDate, endDate) {
     SELECT
       a.event_date,
       s.student_name,
-      a.event_type,
-      a.event_reason
+      a.event_type
     FROM attendance a
     JOIN student s ON a.sid = s.sid
     WHERE s.cid = $1 AND a.event_date BETWEEN $2 AND $3
@@ -434,8 +433,7 @@ export async function exportClassAttendance(cid, startDate, endDate) {
   detailSheet.columns = [
     { header: '日期', key: 'date', width: 15 },
     { header: '学生姓名', key: 'student_name', width: 15 },
-    { header: '类型', key: 'type', width: 12 },
-    { header: '原因', key: 'reason', width: 40 }
+    { header: '类型', key: 'type', width: 12 }
   ];
 
   const eventTypeMap = {
@@ -449,8 +447,7 @@ export async function exportClassAttendance(cid, startDate, endDate) {
     detailSheet.addRow({
       date: formatDatefromsqldatetoyyyymmdd(row.event_date),
       student_name: row.student_name,
-      type: eventTypeMap[row.event_type] || row.event_type,
-      reason: row.event_reason || ''
+      type: eventTypeMap[row.event_type] || row.event_type
     });
   }
   detailSheet.getRow(1).font = { bold: true };
@@ -523,8 +520,7 @@ export async function exportStudentsAttendance(sids, startDate, endDate) {
     SELECT
       a.sid,
       a.event_date,
-      a.event_type,
-      a.event_reason
+      a.event_type
     FROM attendance a
     WHERE a.sid = ANY($1) AND a.event_date BETWEEN $2 AND $3
     ORDER BY a.sid, a.event_date
@@ -538,8 +534,7 @@ export async function exportStudentsAttendance(sids, startDate, endDate) {
     }
     const dateKey = row.event_date.toISOString().split('T')[0];
     attendanceMap[row.sid][dateKey] = {
-      type: row.event_type,
-      reason: row.event_reason
+      type: row.event_type
     };
   }
 
@@ -562,17 +557,16 @@ export async function exportStudentsAttendance(sids, startDate, endDate) {
 
     sheet.columns = [
       { header: '日期', key: 'date', width: 15 },
-      { header: '出勤状态', key: 'status', width: 15 },
-      { header: '未出勤原因', key: 'reason', width: 40 }
+      { header: '出勤状态', key: 'status', width: 15 }
     ];
 
     // Add student info as first rows
-    sheet.insertRow(1, ['学生信息', '', '']);
-    sheet.insertRow(2, ['学生ID', student.sid, '']);
-    sheet.insertRow(3, ['学生姓名', student.student_name, '']);
-    sheet.insertRow(4, ['所属班级', className, '']);
-    sheet.insertRow(5, ['是否参与点名', student.attendance ? '是' : '否', '']);
-    sheet.insertRow(6, ['', '', '']);
+    sheet.insertRow(1, ['学生信息', '']);
+    sheet.insertRow(2, ['学生ID', student.sid]);
+    sheet.insertRow(3, ['学生姓名', student.student_name]);
+    sheet.insertRow(4, ['所属班级', className]);
+    sheet.insertRow(5, ['是否参与点名', student.attendance ? '是' : '否']);
+    sheet.insertRow(6, ['', '']);
 
     // Style info section
     for (let i = 1; i <= 5; i++) {
@@ -580,7 +574,7 @@ export async function exportStudentsAttendance(sids, startDate, endDate) {
     }
 
     // Add header row for attendance data
-    sheet.getRow(7).values = ['日期', '出勤状态', '未出勤原因'];
+    sheet.getRow(7).values = ['日期', '出勤状态'];
     sheet.getRow(7).font = { bold: true };
     sheet.getRow(7).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
 
@@ -593,14 +587,12 @@ export async function exportStudentsAttendance(sids, startDate, endDate) {
       const record = studentAttendance[dateKey];
 
       let status = '出勤';
-      let reason = '';
 
       if (record) {
         if (record.type === 'temp') {
           status = '临时出勤';
         } else {
           status = eventTypeMap[record.type] || record.type;
-          reason = record.reason || '';
         }
       } else if (!student.attendance) {
         status = '不参与点名';
@@ -608,8 +600,7 @@ export async function exportStudentsAttendance(sids, startDate, endDate) {
 
       sheet.addRow({
         date: dateFormatted,
-        status: status,
-        reason: reason
+        status: status
       });
     }
   }
