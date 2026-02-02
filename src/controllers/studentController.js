@@ -331,8 +331,8 @@ export async function putStudentEventController(req, res) {
       });
     }
 
-    // Check class access for each student's class (skip for superadmin)
-    if (req.role !== 'superadmin') {
+    // Check class access for each student's class (skip for superadmin or unauthenticated users)
+    if (req.aid && req.role !== 'superadmin') {
       const uniqueSids = [...new Set(events.map(e => e.sid).filter(sid => sid))];
 
       if (uniqueSids.length > 0) {
