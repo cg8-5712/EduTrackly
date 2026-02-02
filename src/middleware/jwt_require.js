@@ -114,3 +114,36 @@ export function conditionalHomeworkJwt(req, res, next) {
   logger.debug(`📝 Homework for ${dueDate} (today: ${today}), JWT required`);
   return jwtRequire(req, res, next);
 }
+
+/**
+ * Conditional JWT middleware for student event updates
+ * 当天学生事件不需要认证，其他日期的事件需要认证
+ */
+export function conditionalStudentEventJwt(req, res, next) {
+  // 获取日期参数（可能来自 path 或 query）
+  // 转换为字符串以确保比较正确（可能是数字或字符串）
+  let eventDate = req.params.date || req.query.date;
+
+  // 如果没有提供日期，默认为今天
+  if (!eventDate) {
+    logger.debug(`📅 Student event date not provided, defaulting to today, JWT not required`);
+    req.aid = null;
+    req.role = null;
+    return next();
+  }
+
+  eventDate = String(eventDate);
+  const today = moment().format('YYYYMMDD');
+
+  // 如果是当天事件，不需要 JWT 认证
+  if (eventDate === today) {
+    logger.debug(`📅 Student event for today (${eventDate}), JWT not required`);
+    req.aid = null;
+    req.role = null;
+    return next();
+  }
+
+  // 如果是未来或过去的事件，需要 JWT 认证
+  logger.debug(`📅 Student event for ${eventDate} (today: ${today}), JWT required`);
+  return jwtRequire(req, res, next);
+}

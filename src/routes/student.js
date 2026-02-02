@@ -5,7 +5,7 @@ import { addStudentsController,
   attendanceChangeController,
   deleteStudentController,
   putStudentEventController } from '../controllers/studentController.js';
-import jwtRequire, { optionalJwt } from '../middleware/jwt_require.js';
+import jwtRequire, { optionalJwt, conditionalStudentEventJwt } from '../middleware/jwt_require.js';
 import { requireStudentClassAccess } from '../middleware/role_require.js';
 import { rateLimiter } from '../middleware/rate_limiter.js';
 
@@ -26,10 +26,10 @@ router.put('/attendance-change', jwtRequire, requireStudentClassAccess({ sidSour
 // Delete student - require JWT and student class access
 router.delete('/delete', jwtRequire, requireStudentClassAccess({ sidSource: 'query' }), rateLimiter('write'), deleteStudentController);
 
-// Event update with date param - require JWT (class access checked in controller for batch operations)
-router.put('/event/:date', jwtRequire, rateLimiter('write'), putStudentEventController);
+// Event update with date param - conditional JWT: today's events don't require auth, future/past requires auth (class access checked in controller)
+router.put('/event/:date', conditionalStudentEventJwt, rateLimiter('write'), putStudentEventController);
 
-// Event update without date - require JWT (class access checked in controller for batch operations)
-router.put('/event', rateLimiter('write'), putStudentEventController);
+// Event update without date - conditional JWT: defaults to today, no auth required (class access checked in controller)
+router.put('/event', conditionalStudentEventJwt, rateLimiter('write'), putStudentEventController);
 
 export default router;
