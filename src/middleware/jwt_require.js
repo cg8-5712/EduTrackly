@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import config from '../config/config.js';
 import logger from './loggerMiddleware.js';
 import { AuthErrors } from '../config/errorCodes.js';
+import moment from 'moment';
 
 /**
  * Required JWT middleware
@@ -96,8 +97,6 @@ export function optionalJwt(req, res, next) {
  * 当天作业不需要认证，其他日期的作业需要认证
  */
 export function conditionalHomeworkJwt(req, res, next) {
-  const moment = require('moment');
-
   // 获取作业日期，如果没有则默认为今天
   const dueDate = req.body.due_date || moment().format('YYYYMMDD');
   const today = moment().format('YYYYMMDD');
