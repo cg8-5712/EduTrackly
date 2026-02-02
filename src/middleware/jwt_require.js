@@ -98,18 +98,19 @@ export function optionalJwt(req, res, next) {
  */
 export function conditionalHomeworkJwt(req, res, next) {
   // 获取作业日期，如果没有则默认为今天
-  const dueDate = req.body.due_date || moment().format('YYYYMMDD');
+  // 转换为字符串以确保比较正确（可能是数字或字符串）
+  const dueDate = req.body.due_date ? String(req.body.due_date) : moment().format('YYYYMMDD');
   const today = moment().format('YYYYMMDD');
 
   // 如果是当天作业，不需要 JWT 认证
   if (dueDate === today) {
-    logger.debug(`📝 Homework for today, JWT not required`);
+    logger.debug(`📝 Homework for today (${dueDate}), JWT not required`);
     req.aid = null;
     req.role = null;
     return next();
   }
 
   // 如果是未来或过去的作业，需要 JWT 认证
-  logger.debug(`📝 Homework for ${dueDate}, JWT required`);
+  logger.debug(`📝 Homework for ${dueDate} (today: ${today}), JWT required`);
   return jwtRequire(req, res, next);
 }
