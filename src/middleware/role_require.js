@@ -329,3 +329,22 @@ export function requireSloganClassAccess(options = {}) {
     }
   };
 }
+
+/**
+ * Conditional class access middleware
+ * Only checks class access if user is authenticated (req.aid exists)
+ * Used for routes that have optional authentication
+ */
+export function conditionalClassAccess(options = {}) {
+  const { cidSource = 'body', cidField = 'cid' } = options;
+
+  return async (req, res, next) => {
+    // If user is not authenticated, skip class access check
+    if (!req.aid) {
+      return next();
+    }
+
+    // User is authenticated, perform class access check
+    return requireClassAccess(options)(req, res, next);
+  };
+}
