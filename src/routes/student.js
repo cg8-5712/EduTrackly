@@ -30,6 +30,6 @@ router.delete('/delete', jwtRequire, requireStudentClassAccess({ sidSource: 'que
 router.put('/event/:date', jwtRequire, rateLimiter('write'), putStudentEventController);
 
 // Event update without date - require JWT (class access checked in controller for batch operations)
-router.put('/event', jwtRequire, rateLimiter('write'), putStudentEventController);
+router.put('/event', rateLimiter('write'), putStudentEventController);
 
 export default router;
