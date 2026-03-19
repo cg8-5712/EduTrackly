@@ -15,6 +15,9 @@ router.get('/get', optionalJwt, rateLimiter('read'), sloganController.getSlogan)
 // List slogans - optionalJwt for role-based filtering
 router.get('/list', optionalJwt, rateLimiter('read'), sloganController.listSlogans);
 
+// Get random slogans by cid - optionalJwt for role-based filtering
+router.get('/random', optionalJwt, rateLimiter('read'), sloganController.getRandomSlogans);
+
 // Update slogan - require JWT and slogan class access (slid from query)
 router.put('/update', jwtRequire, requireSloganClassAccess({ slidSource: 'query' }), rateLimiter('write'), sloganController.updateSlogan);
 

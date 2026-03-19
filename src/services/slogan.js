@@ -159,6 +159,34 @@ export async function updateSlogan(slid, { content }) {
 }
 
 /**
+ * Get random slogans by cid
+ * @param {number} cid - Class ID
+ * @param {number} count - Number of random slogans to return
+ */
+export async function getRandomSlogans(cid, count = 3) {
+  logger.debug(`Getting ${count} random slogans for class ${cid}`);
+
+  const classRes = await db.query('SELECT 1 FROM class WHERE cid = $1 LIMIT 1', [cid]);
+  if (classRes.rows.length === 0) {
+    logger.warn(`CID ${cid} does not exist`);
+    throw ClassErrors.NOT_FOUND;
+  }
+
+  const result = await db.query(
+    `SELECT sl.slid, sl.cid, c.class_name, sl.content, sl.created_at
+     FROM slogan sl
+     LEFT JOIN class c ON sl.cid = c.cid
+     WHERE sl.cid = $1
+     ORDER BY RANDOM()
+     LIMIT $2`,
+    [cid, count]
+  );
+
+  logger.info(`Retrieved ${result.rows.length} random slogans for class ${cid}`);
+  return result.rows;
+}
+
+/**
  * Delete a slogan
  * @param {number} slid - Slogan ID
  */

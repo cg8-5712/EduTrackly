@@ -256,6 +256,61 @@ export async function updateSlogan(req, res) {
 }
 
 /**
+ * Get random slogans by cid
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function getRandomSlogans(req, res) {
+  try {
+    const { cid } = req.query;
+    logger.debug('Received getRandomSlogans request', { cid });
+
+    if (!cid) {
+      logger.warn('Missing required parameter: class id');
+      return res.status(400).json({
+        ...ErrorCodes.ParamsErrors.REQUIRE_CID,
+        timestamp: Date.now()
+      });
+    }
+
+    // Admin access check
+    if (req.aid && req.role === 'admin') {
+      const hasAccess = await hasClassAccess(req.aid, parseInt(cid), req.role);
+      if (!hasAccess) {
+        logger.warn('Random slogans class access denied', { aid: req.aid, cid });
+        return res.status(403).json({
+          ...ErrorCodes.AuthErrors.CLASS_ACCESS_DENIED,
+          timestamp: Date.now()
+        });
+      }
+    }
+
+    const result = await sloganService.getRandomSlogans(parseInt(cid));
+
+    logger.info('Random slogans retrieved successfully', { cid, count: result.length });
+    res.json({
+      code: 0,
+      message: 'Random slogans retrieved successfully',
+      data: result,
+      timestamp: Date.now()
+    });
+
+  } catch (error) {
+    logger.error('Error in getRandomSlogans controller', {
+      error: {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        stack: error.stack
+      },
+      query: req.query
+    });
+
+    handleControllerError(error, res, req);
+  }
+}
+
+/**
  * Delete a slogan
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
